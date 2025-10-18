@@ -8,6 +8,8 @@
 - **Backend**: Supabase (BaaS) with PostgreSQL + pgvector extension for embeddings
 - **AI Pipeline**: RAG pattern using Google Gemini (Pro + Embedding models)
 - **External API**: Sleeper API for NFL player data
+- **Authentication**: Hybrid system - Supabase auth.users + custom app_users with sleeper_user_id linking
+- **Authorization**: Three-tier role system (user/admin/super_admin) with comprehensive audit logging
 - **Data Flow**: Daily ingestion → chunk → embed → store → similarity search → augmented prompts
 
 ### Critical RAG Implementation
@@ -65,14 +67,31 @@ dart run build_runner build
 - Generated files (`.g.dart`) should not be manually edited
 
 ### Edge Functions (Supabase)
-Two critical backend functions (TypeScript/Deno):
-- `get-fantasy-advice`: Main query handler for user prompts
-- `daily-data-ingestion`: Automated player data refresh
+Complete backend API with TypeScript/Deno functions:
+
+#### Core RAG System
+- `hybrid-fantasy-advice`: Main RAG query handler with cost-optimized embedding system
+- `simple-ingestion`: Daily NFL player data ingestion and embedding generation
+
+#### User Management & Authentication
+- `user-sync`: Sleeper user registration and league/roster synchronization
+- `user-session`: Session management and authentication utilities
+- `auth-user`: Authentication helper functions
+- `get-auth-token`: JWT token generation for testing
+
+#### Admin Management System
+- `admin-management`: Complete role-based access control system
+  - User role management (user/admin/super_admin)
+  - Admin-only features (list users, change roles, audit logs)
+  - Comprehensive security audit logging
 
 ### Data Patterns
-- Player embeddings stored in PostgreSQL with pgvector extension
-- Similarity search enables semantic query matching
-- Context chunking keeps prompts within token limits while maintaining relevance
+- **Hybrid RAG Architecture**: Stable embeddings once/season + real-time filters for 120x cost savings
+- **Player embeddings** stored in PostgreSQL with pgvector extension (768-dimensional vectors)
+- **Similarity search** enables semantic query matching with high relevance
+- **Context chunking** keeps prompts within token limits while maintaining relevance
+- **Security audit system**: Complete logging across all Edge Functions with user identification
+- **Admin role system**: user_role enum (user, admin, super_admin) with audit trail for role changes
 
 ## Integration Points
 
@@ -102,9 +121,16 @@ Two critical backend functions (TypeScript/Deno):
 
 ### Debugging RAG Issues
 - Check `player_embeddings` table for data freshness
-- Verify embedding model consistency (embedding-001)
+- Verify embedding model consistency (text-embedding-004)
 - Monitor Edge Function logs for query processing errors
 - Test similarity search queries directly in Supabase
+
+### Admin System Management
+- Use `admin-management` Edge Function for role management
+- Check `security_audit` table for comprehensive activity logging
+- Verify admin roles using `is_admin()` and `is_super_admin()` functions
+- Monitor `admin_role_changes` table for role change audit trail
+- Test admin functions with th0rjc user (super_admin) for validation
 
 ## Style Guides
 - Follow Dart and Flutter style guides
