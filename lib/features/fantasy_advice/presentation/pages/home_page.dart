@@ -30,9 +30,10 @@ class _HomePageState extends ConsumerState<HomePage> {
     try {
       // TODO: Call our Supabase Edge Function
       await Future.delayed(const Duration(seconds: 1)); // Simulate API call
-      
+
       setState(() {
-        _advice = "🏈 RAG-powered fantasy advice coming soon! Your query: '${_queryController.text.trim()}'";
+        _advice =
+            "🏈 RAG-powered fantasy advice coming soon! Your query: '${_queryController.text.trim()}'";
       });
     } catch (error) {
       setState(() {
@@ -48,12 +49,9 @@ class _HomePageState extends ConsumerState<HomePage> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    
+
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('rem_mm'),
-        centerTitle: true,
-      ),
+      appBar: AppBar(title: const Text('rem_mm'), centerTitle: true),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
         child: Column(
@@ -76,22 +74,20 @@ class _HomePageState extends ConsumerState<HomePage> {
               textAlign: TextAlign.center,
             ),
             const SizedBox(height: 32),
-            
+
             // Query Input
             TextField(
               controller: _queryController,
               decoration: InputDecoration(
                 hintText: 'e.g., "Who are some good waiver wire QBs this week?"',
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(12),
-                ),
+                border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
                 prefixIcon: const Icon(Icons.sports_football),
               ),
               maxLines: 3,
               onSubmitted: (_) => _getFantasyAdvice(),
             ),
             const SizedBox(height: 16),
-            
+
             // Submit Button
             ElevatedButton(
               onPressed: _isLoading ? null : _getFantasyAdvice,
@@ -99,9 +95,7 @@ class _HomePageState extends ConsumerState<HomePage> {
                 backgroundColor: theme.colorScheme.primary,
                 foregroundColor: Colors.white,
                 padding: const EdgeInsets.symmetric(vertical: 16),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12),
-                ),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
               ),
               child: _isLoading
                   ? const SizedBox(
@@ -115,7 +109,7 @@ class _HomePageState extends ConsumerState<HomePage> {
                   : const Text('Get Fantasy Advice'),
             ),
             const SizedBox(height: 24),
-            
+
             // Response Area
             if (_advice != null) ...[
               Container(
@@ -123,9 +117,7 @@ class _HomePageState extends ConsumerState<HomePage> {
                 decoration: BoxDecoration(
                   color: theme.colorScheme.surfaceVariant.withOpacity(0.5),
                   borderRadius: BorderRadius.circular(12),
-                  border: Border.all(
-                    color: theme.colorScheme.outline.withOpacity(0.2),
-                  ),
+                  border: Border.all(color: theme.colorScheme.outline.withOpacity(0.2)),
                 ),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -137,17 +129,14 @@ class _HomePageState extends ConsumerState<HomePage> {
                       ),
                     ),
                     const SizedBox(height: 8),
-                    Text(
-                      _advice!,
-                      style: theme.textTheme.bodyLarge,
-                    ),
+                    Text(_advice!, style: theme.textTheme.bodyLarge),
                   ],
                 ),
               ),
             ],
-            
+
             const Spacer(),
-            
+
             // Status Info
             Container(
               padding: const EdgeInsets.all(12),
@@ -168,10 +157,7 @@ class _HomePageState extends ConsumerState<HomePage> {
                         ),
                       ),
                       const SizedBox(width: 8),
-                      Text(
-                        'Local Supabase Running',
-                        style: theme.textTheme.bodySmall,
-                      ),
+                      Text('Local Supabase Running', style: theme.textTheme.bodySmall),
                     ],
                   ),
                   const SizedBox(height: 4),

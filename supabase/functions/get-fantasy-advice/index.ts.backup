@@ -4,33 +4,6 @@ import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.39.3'
 
 console.log("get-fantasy-advice function loaded")
 
-// Security constants
-const MAX_QUERY_LENGTH = 500
-
-// Input validation and sanitization
-function validateAndSanitizeInput(query: string): { isValid: boolean; sanitized: string; error?: string } {
-  if (!query || typeof query !== 'string') {
-    return { isValid: false, sanitized: '', error: 'Query must be a non-empty string' }
-  }
-  
-  if (query.length > MAX_QUERY_LENGTH) {
-    return { isValid: false, sanitized: '', error: `Query too long. Maximum ${MAX_QUERY_LENGTH} characters.` }
-  }
-  
-  // Basic sanitization - remove potentially dangerous patterns
-  const sanitized = query
-    .replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, '') // Remove script tags
-    .replace(/javascript:/gi, '') // Remove javascript: protocols
-    .replace(/on\w+\s*=/gi, '') // Remove event handlers
-    .trim()
-  
-  if (sanitized.length === 0) {
-    return { isValid: false, sanitized: '', error: 'Query contains no valid content' }
-  }
-  
-  return { isValid: true, sanitized }
-}
-
 const corsHeaders = {
   'Access-Control-Allow-Origin': Deno.env.get('ALLOWED_ORIGINS') || 'http://localhost:3000', // 🔒 Restrict origins
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
@@ -48,11 +21,9 @@ Deno.serve(async (req) => {
     // Get the request body
     const { query, context } = await req.json()
 
-    // Validate and sanitize input
-    const validation = validateAndSanitizeInput(query)
-    if (!validation.isValid) {
+    if (!query) {
       return new Response(
-        JSON.stringify({ error: validation.error }),
+        JSON.stringify({ error: 'Query is required' }),
         { 
           status: 400, 
           headers: { ...corsHeaders, 'Content-Type': 'application/json' }
@@ -71,13 +42,12 @@ Deno.serve(async (req) => {
     // 3. Augment the prompt with relevant player context
     // 4. Call Gemini Pro for final fantasy football advice
 
-    // For now, return a secure placeholder response
+    // For now, return a placeholder response
     const response = {
-      query: validation.sanitized,
-      advice: "🔒 Secure RAG-powered fantasy advice coming soon! Input validation is working.",
+      query: query,
+      advice: "🏈 RAG-powered fantasy advice coming soon! Your local Supabase setup is working perfectly.",
       context: context || "No additional context provided",
-      timestamp: new Date().toISOString(),
-      security_status: "✅ Request validated and sanitized"
+      timestamp: new Date().toISOString()
     }
 
     return new Response(
@@ -93,7 +63,7 @@ Deno.serve(async (req) => {
     return new Response(
       JSON.stringify({ 
         error: 'Internal server error',
-        request_id: crypto.randomUUID() // For debugging
+        details: error.message 
       }),
       { 
         status: 500, 
