@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:google_fonts/google_fonts.dart';
+import 'package:rem_mm/core/config/env.dart';
+import 'package:rem_mm/core/theme/app_theme.dart';
+import 'package:rem_mm/features/navigation/main_navigation_page.dart';
+import 'package:rem_mm/features/settings/presentation/providers/settings_providers.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
-
-import 'core/config/env.dart';
-import 'features/fantasy_advice/presentation/pages/home_page.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -15,48 +15,21 @@ void main() async {
   runApp(const ProviderScope(child: RemMmApp()));
 }
 
-class RemMmApp extends StatelessWidget {
+class RemMmApp extends ConsumerWidget {
   const RemMmApp({super.key});
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final themeMode = ref.watch<ThemeMode>(themeModeProvider);
+    final appTheme = ref.watch(appThemeProvider);
+
     return MaterialApp(
       title: 'rem_mm - Fantasy Football AI',
       debugShowCheckedModeBanner: false,
-      theme: ThemeData(
-        useMaterial3: true,
-        colorScheme:
-            ColorScheme.fromSeed(
-              seedColor: const Color(0xFFF58031), // Orange from palette
-              brightness: Brightness.light,
-            ).copyWith(
-              secondary: const Color(0xFF32ACE3), // Blue from palette
-              tertiary: const Color(0xFF59ba32), // Green from palette
-            ),
-        textTheme: GoogleFonts.robotoSlabTextTheme().copyWith(
-          // Body text uses Roboto Slab weight 100
-          bodyLarge: GoogleFonts.robotoSlab(fontWeight: FontWeight.w100),
-          bodyMedium: GoogleFonts.robotoSlab(fontWeight: FontWeight.w100),
-          bodySmall: GoogleFonts.robotoSlab(fontWeight: FontWeight.w100),
-          // Headings use Raleway weight 400
-          headlineLarge: GoogleFonts.raleway(fontWeight: FontWeight.w400),
-          headlineMedium: GoogleFonts.raleway(fontWeight: FontWeight.w400),
-          headlineSmall: GoogleFonts.raleway(fontWeight: FontWeight.w400),
-          titleLarge: GoogleFonts.raleway(fontWeight: FontWeight.w400),
-          titleMedium: GoogleFonts.raleway(fontWeight: FontWeight.w400),
-          titleSmall: GoogleFonts.raleway(fontWeight: FontWeight.w400),
-        ),
-        appBarTheme: AppBarTheme(
-          backgroundColor: const Color(0xFFF58031),
-          foregroundColor: Colors.white,
-          titleTextStyle: GoogleFonts.raleway(
-            fontSize: 24,
-            fontWeight: FontWeight.w400,
-            color: Colors.white,
-          ),
-        ),
-      ),
-      home: const HomePage(),
+      theme: appTheme.lightTheme,
+      darkTheme: appTheme.darkTheme,
+      themeMode: themeMode, // Defaults to dark mode
+      home: const MainNavigationPage(),
     );
   }
 }

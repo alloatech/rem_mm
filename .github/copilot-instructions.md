@@ -138,3 +138,17 @@ Complete backend API with TypeScript/Deno functions:
 - UI needs to be responsive, modern, compact and user-friendly
 - Color pallette: #F58031, #32ACE3, #59ba32
 - Fonts: Use Google Fonts - 'Roboto Slab' weight 100 for body, 'Raleway' weight 400 for headings
+
+## Dart Coding Guidelines
+- Try to use the latest version of stable dart and flutter.  Also - use the most current packages.
+- Use null safety features extensively
+- Prefer immutable data structures where possible
+- Use async/await for all asynchronous operations   
+- Prefer importing packages over relative paths
+- Leverage supabase_flutter abstractions for database and auth interactions.  Leverage the existing Edge Functions rather than creating new backend logic in the app. Leverage supabase_flutter abstraction for getting realtime data and subscriptions.
+- Leverage riverpod for state management and dependency injection.
+- Every class should leverage a proper logging mechanism for easier debugging and monitoring. Use a consistent logging package and ensure logs include relevant context information and have various levels depending on the severity of the log message.
+- make sure to handle exceptions gracefully and provide meaningful error messages.
+- make all status messages clickable and pasteable where applicable to improve user experience.
+- the UI should be compact and information-dense while remaining user-friendly. similar to sleeper's UI.
+- for UI labels and text I prefer ALL lower case except for I, proper nouns, and acronyms.

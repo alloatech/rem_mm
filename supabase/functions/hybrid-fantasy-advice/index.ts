@@ -171,13 +171,15 @@ Deno.serve(async (req) => {
       req
     )
     
-    const { query, gemini_api_key, sleeper_user_id } = await req.json()
+    const { query, sleeper_user_id } = await req.json()
 
     // Validation
     if (!query || typeof query !== 'string') {
       throw new Error('Query is required')
     }
 
+    // Get Gemini API key from environment
+    const gemini_api_key = Deno.env.get('GEMINI_API_KEY')
     if (!gemini_api_key) {
       throw new Error('Gemini API key is required')
     }

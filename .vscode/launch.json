@@ -5,31 +5,13 @@
     "version": "0.2.0",
     "configurations": [
         {
-            "name": "rem_mm",
-            "request": "launch",
-            "type": "dart"
-        },
-        {
-            "name": "rem_mm (profile mode)",
-            "request": "launch",
-            "type": "dart"
-        },
-        {
             "name": "rem_mm (web)",
             "request": "launch",
             "type": "dart",
-            "deviceId": "chrome"
-        },
-        {
-            "name": "rem_mm (profile mode)",
-            "type": "dart",
-            "flutterMode": "profile"
-        },
-        {
-            "name": "rem_mm (release mode)",
-            "request": "launch",
-            "type": "dart",
-            "flutterMode": "release"
+            "deviceId": "chrome",
+            "args": [
+                "--wasm"
+            ]
         }
     ]
 }

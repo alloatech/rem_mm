@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:rem_mm/features/fantasy_advice/presentation/providers/fantasy_advice_providers.dart';
+import 'package:rem_mm/features/profile/presentation/widgets/user_avatar.dart';
+import 'package:rem_mm/features/settings/presentation/pages/settings_page.dart';
 
 class HomePage extends ConsumerStatefulWidget {
   const HomePage({super.key});
@@ -28,12 +31,14 @@ class _HomePageState extends ConsumerState<HomePage> {
     });
 
     try {
-      // TODO: Call our Supabase Edge Function
-      await Future.delayed(const Duration(seconds: 1)); // Simulate API call
+      final service = ref.read(fantasyAdviceServiceProvider);
+      final advice = await service.getFantasyAdvice(
+        query: _queryController.text.trim(),
+        context: "Current week fantasy football analysis",
+      );
 
       setState(() {
-        _advice =
-            "🏈 RAG-powered fantasy advice coming soon! Your query: '${_queryController.text.trim()}'";
+        _advice = advice;
       });
     } catch (error) {
       setState(() {
@@ -51,7 +56,23 @@ class _HomePageState extends ConsumerState<HomePage> {
     final theme = Theme.of(context);
 
     return Scaffold(
-      appBar: AppBar(title: const Text('rem_mm'), centerTitle: true),
+      appBar: AppBar(
+        title: const Text('rem_mm'),
+        centerTitle: true,
+        actions: [
+          Padding(
+            padding: const EdgeInsets.only(right: 16.0),
+            child: UserAvatar(
+              size: 36,
+              onSettingsTap: () {
+                Navigator.of(context).push(
+                  MaterialPageRoute<void>(builder: (context) => const SettingsPage()),
+                );
+              },
+            ),
+          ),
+        ],
+      ),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
         child: Column(
@@ -59,17 +80,19 @@ class _HomePageState extends ConsumerState<HomePage> {
           children: [
             // Header
             Text(
-              'Fantasy Football AI Assistant',
+              'fantasy football AI assistant',
               style: theme.textTheme.headlineMedium?.copyWith(
                 color: theme.colorScheme.primary,
+                fontWeight: FontWeight.w700,
               ),
               textAlign: TextAlign.center,
             ),
             const SizedBox(height: 8),
             Text(
-              'Ask me anything about your fantasy football lineup!',
+              'ask me anything about your fantasy football lineup!',
               style: theme.textTheme.bodyMedium?.copyWith(
-                color: theme.colorScheme.onSurface.withOpacity(0.7),
+                color: theme.colorScheme.onSurface.withValues(alpha: 0.7),
+                fontWeight: FontWeight.w600,
               ),
               textAlign: TextAlign.center,
             ),
@@ -79,11 +102,13 @@ class _HomePageState extends ConsumerState<HomePage> {
             TextField(
               controller: _queryController,
               decoration: InputDecoration(
-                hintText: 'e.g., "Who are some good waiver wire QBs this week?"',
+                hintText: 'e.g., "who are some good waiver wire QBs this week?"',
+                hintStyle: TextStyle(fontWeight: FontWeight.w500, fontSize: 12),
                 border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
                 prefixIcon: const Icon(Icons.sports_football),
               ),
               maxLines: 3,
+              style: TextStyle(fontWeight: FontWeight.w500, fontSize: 14),
               onSubmitted: (_) => _getFantasyAdvice(),
             ),
             const SizedBox(height: 16),
@@ -106,7 +131,10 @@ class _HomePageState extends ConsumerState<HomePage> {
                         color: Colors.white,
                       ),
                     )
-                  : const Text('Get Fantasy Advice'),
+                  : const Text(
+                      'get fantasy advice',
+                      style: TextStyle(fontWeight: FontWeight.w600),
+                    ),
             ),
             const SizedBox(height: 24),
 
@@ -115,21 +143,28 @@ class _HomePageState extends ConsumerState<HomePage> {
               Container(
                 padding: const EdgeInsets.all(16),
                 decoration: BoxDecoration(
-                  color: theme.colorScheme.surfaceVariant.withOpacity(0.5),
+                  color: theme.colorScheme.surfaceContainerHighest.withValues(alpha: 0.5),
                   borderRadius: BorderRadius.circular(12),
-                  border: Border.all(color: theme.colorScheme.outline.withOpacity(0.2)),
+                  border: Border.all(
+                    color: theme.colorScheme.outline.withValues(alpha: 0.2),
+                  ),
                 ),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      'AI Advice:',
+                      'AI advice:',
                       style: theme.textTheme.titleMedium?.copyWith(
-                        fontWeight: FontWeight.bold,
+                        fontWeight: FontWeight.w700,
                       ),
                     ),
                     const SizedBox(height: 8),
-                    Text(_advice!, style: theme.textTheme.bodyLarge),
+                    Text(
+                      _advice!,
+                      style: theme.textTheme.bodyLarge?.copyWith(
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
                   ],
                 ),
               ),
@@ -138,37 +173,100 @@ class _HomePageState extends ConsumerState<HomePage> {
             const Spacer(),
 
             // Status Info
-            Container(
-              padding: const EdgeInsets.all(12),
-              decoration: BoxDecoration(
-                color: theme.colorScheme.secondary.withOpacity(0.1),
-                borderRadius: BorderRadius.circular(8),
-              ),
-              child: Column(
-                children: [
-                  Row(
-                    children: [
-                      Container(
-                        width: 8,
-                        height: 8,
-                        decoration: BoxDecoration(
-                          color: Colors.green,
-                          shape: BoxShape.circle,
+            Consumer(
+              builder: (context, ref, child) {
+                final serviceAvailableAsync = ref.watch(serviceAvailabilityProvider);
+
+                return serviceAvailableAsync.when(
+                  data: (isAvailable) => Container(
+                    padding: const EdgeInsets.all(12),
+                    decoration: BoxDecoration(
+                      color: theme.colorScheme.secondary.withValues(alpha: 0.1),
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: Column(
+                      children: [
+                        Row(
+                          children: [
+                            Container(
+                              width: 8,
+                              height: 8,
+                              decoration: BoxDecoration(
+                                color: isAvailable ? Colors.green : Colors.red,
+                                shape: BoxShape.circle,
+                              ),
+                            ),
+                            const SizedBox(width: 8),
+                            Text(
+                              isAvailable ? 'connected' : 'Connection Error',
+                              style: theme.textTheme.bodySmall,
+                            ),
+                          ],
                         ),
-                      ),
-                      const SizedBox(width: 8),
-                      Text('Local Supabase Running', style: theme.textTheme.bodySmall),
-                    ],
-                  ),
-                  const SizedBox(height: 4),
-                  Text(
-                    'RAG Pipeline: Ready • Edge Functions: Active',
-                    style: theme.textTheme.bodySmall?.copyWith(
-                      color: theme.colorScheme.onSurface.withOpacity(0.6),
+                        const SizedBox(height: 4),
+                        Text(
+                          isAvailable
+                              ? 'RAG Pipeline: Ready • Edge Functions: Active'
+                              : 'Service temporarily unavailable',
+                          style: theme.textTheme.bodySmall?.copyWith(
+                            color: theme.colorScheme.onSurface.withValues(alpha: 0.6),
+                          ),
+                        ),
+                      ],
                     ),
                   ),
-                ],
-              ),
+                  loading: () => Container(
+                    padding: const EdgeInsets.all(12),
+                    decoration: BoxDecoration(
+                      color: theme.colorScheme.secondary.withValues(alpha: 0.1),
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: Row(
+                      children: [
+                        SizedBox(
+                          width: 8,
+                          height: 8,
+                          child: CircularProgressIndicator(strokeWidth: 1),
+                        ),
+                        const SizedBox(width: 8),
+                        Text('Checking connection...', style: theme.textTheme.bodySmall),
+                      ],
+                    ),
+                  ),
+                  error: (error, stack) => Container(
+                    padding: const EdgeInsets.all(12),
+                    decoration: BoxDecoration(
+                      color: Colors.red.withValues(alpha: 0.1),
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: Column(
+                      children: [
+                        Row(
+                          children: [
+                            Container(
+                              width: 8,
+                              height: 8,
+                              decoration: const BoxDecoration(
+                                color: Colors.red,
+                                shape: BoxShape.circle,
+                              ),
+                            ),
+                            const SizedBox(width: 8),
+                            Text('Connection Failed', style: theme.textTheme.bodySmall),
+                          ],
+                        ),
+                        const SizedBox(height: 4),
+                        Text(
+                          'Unable to connect to backend services',
+                          style: theme.textTheme.bodySmall?.copyWith(
+                            color: Colors.red.withValues(alpha: 0.7),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                );
+              },
             ),
           ],
         ),
