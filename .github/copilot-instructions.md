@@ -105,3 +105,10 @@ Two critical backend functions (TypeScript/Deno):
 - Verify embedding model consistency (embedding-001)
 - Monitor Edge Function logs for query processing errors
 - Test similarity search queries directly in Supabase
+
+## Style Guides
+- Follow Dart and Flutter style guides
+- Prefer dark mode UI designs
+- UI needs to be responsive, modern, compact and user-friendly
+- Color pallette: #F58031, #32ACE3, #59ba32
+- Fonts: Use Google Fonts - 'Roboto Slab' weight 100 for body, 'Raleway' weight 400 for headings

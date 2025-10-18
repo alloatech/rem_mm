@@ -27,6 +27,8 @@ dependencies:
   # hard-coding them into the app.
   envied: ^0.5.4+1
 
+  # Google Fonts for custom typography
+  google_fonts: ^6.1.0
 
   # The following adds the Cupertino Icons font to your application.
   # Use with the CupertinoIcons class for iOS style icons.
