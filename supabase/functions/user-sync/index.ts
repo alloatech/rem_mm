@@ -26,9 +26,12 @@ interface SleeperLeague {
   season: number
   sport: string
   settings: any
+  scoring_settings?: any
   roster_positions: string[]
   total_rosters: number
   avatar?: string  // League avatar ID from Sleeper
+  status?: string  // League status: pre_draft, drafting, in_season, complete
+  metadata?: any   // Additional league metadata
 }
 
 interface SleeperRoster {
@@ -319,11 +322,14 @@ async function syncUserLeagues(supabase: any, sleeper_user_id: string) {
     league_name: league.name,
     season: league.season,
     sport: league.sport,
-    league_type: league.settings?.type || 'redraft',
+    league_type: league.settings?.type === 0 ? 'redraft' : league.settings?.type === 1 ? 'keeper' : league.settings?.type === 2 ? 'dynasty' : 'redraft',
     total_rosters: league.total_rosters,
-    scoring_settings: league.settings || {},
+    scoring_settings: league.scoring_settings || {},
     roster_positions: league.roster_positions || [],
-    avatar: league.avatar || null,  // League avatar from Sleeper API
+    avatar: league.avatar || null,
+    status: league.status || null,
+    settings: league.settings || {},
+    metadata: league.metadata || {},
     last_synced: new Date().toISOString()
   }))
 
@@ -436,11 +442,21 @@ async function syncUserRosters(supabase: any, sleeper_user_id: string) {
     // Store ALL rosters (multi-user strategy)
     for (const roster of rosters) {
       // Check if this roster's owner is registered in our system
-      const { data: rosterOwner } = await supabase
+      console.log(`🔍 Looking for app_user with sleeper_user_id: ${roster.owner_id}`)
+      const { data: rosterOwner, error: ownerError } = await supabase
         .from('app_users')
         .select('id')
         .eq('sleeper_user_id', roster.owner_id)
         .maybeSingle()
+      
+      if (ownerError) {
+        console.log(`❌ Error querying for owner ${roster.owner_id}:`, ownerError)
+      }
+      if (rosterOwner) {
+        console.log(`✅ Found app_user ${rosterOwner.id} for sleeper_user_id ${roster.owner_id}`)
+      } else {
+        console.log(`⚠️  No app_user found for sleeper_user_id ${roster.owner_id} - will set app_user_id to NULL`)
+      }
 
       // Extract team name from users metadata (metadata.team_name like "GlenSuckIt Rangers")
       const teamName = userTeamNames.get(roster.owner_id) || null

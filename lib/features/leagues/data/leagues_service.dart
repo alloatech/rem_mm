@@ -9,24 +9,37 @@ class LeaguesService {
   /// Get all leagues for the current user
   Future<List<League>> getUserLeagues() async {
     try {
-      // For now, use the hardcoded sleeper user ID for testing
-      // In production, this would get the sleeper_user_id from authenticated user
-      const sleeperUserId = '872612101674491904'; // th0rjc test user
-
-      print('🔍 Fetching leagues for sleeper ID: $sleeperUserId');
-
-      // Try direct query first to test database connectivity
-      try {
-        final directResponse = await _supabase.from('leagues').select('*').limit(1);
-        print('🔗 Direct table query test: ${directResponse.length} records');
-      } catch (e) {
-        print('❌ Direct query failed: $e');
+      // Get the current Supabase auth user ID
+      final supabaseUserId = _supabase.auth.currentUser?.id;
+      if (supabaseUserId == null) {
+        print('❌ No authenticated user');
+        return [];
       }
 
-      // Use the helper function that handles RLS automatically
+      print('🔍 Supabase auth user ID: $supabaseUserId');
+
+      // Look up the app_user_id from the supabase_user_id
+      print('🔍 Querying app_users for supabase_user_id: $supabaseUserId');
+
+      final appUserResponse = await _supabase
+          .from('app_users')
+          .select('id')
+          .eq('supabase_user_id', supabaseUserId)
+          .maybeSingle();
+
+      if (appUserResponse == null) {
+        print('❌ No app_user found for supabase_user_id: $supabaseUserId');
+        print('❌ This means the user is not linked. Check seed.sql or registration.');
+        return [];
+      }
+
+      final appUserId = appUserResponse['id'] as String;
+      print('✅ Found app_user_id: $appUserId');
+
+      // Use the new get_user_leagues function that takes app_user_id
       final response = await _supabase.rpc<List<dynamic>>(
         'get_user_leagues',
-        params: {'p_sleeper_user_id': sleeperUserId},
+        params: {'p_app_user_id': appUserId},
       );
 
       print('🏈 Raw leagues response: $response');
@@ -34,7 +47,7 @@ class LeaguesService {
       print('🏈 Leagues count: ${response.length}');
 
       if (response.isEmpty) {
-        print('⚠️ No leagues found for user $sleeperUserId');
+        print('⚠️ No leagues found for user $appUserId');
         return [];
       }
 
@@ -44,6 +57,9 @@ class LeaguesService {
         try {
           final json = response[i] as Map<String, dynamic>;
           print('🏈 Processing league $i: ${json['league_name']}');
+          print('🏈 League JSON keys: ${json.keys.toList()}');
+          print('🏈 Settings: ${json['settings']}');
+          print('🏈 Status: ${json['status']}');
           final league = League.fromJson(json);
           leagues.add(league);
         } catch (e) {

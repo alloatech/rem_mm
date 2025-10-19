@@ -8,12 +8,15 @@ class League {
   final String? leagueType;
   final int? totalRosters;
   final Map<String, dynamic>? scoringSettings;
+  final Map<String, dynamic>? settings; // League settings (separate from scoring)
+  final Map<String, dynamic>? metadata; // League metadata
   final List<String>? rosterPositions;
   final DateTime createdAt;
   final DateTime updatedAt;
   final DateTime? lastSynced;
   final bool isActive;
   final String? avatar; // League avatar ID from Sleeper
+  final String? status; // League status: pre_draft, drafting, in_season, complete
 
   const League({
     required this.id,
@@ -25,12 +28,15 @@ class League {
     this.leagueType,
     this.totalRosters,
     this.scoringSettings,
+    this.settings,
+    this.metadata,
     this.rosterPositions,
     required this.createdAt,
     required this.updatedAt,
     this.lastSynced,
     this.isActive = true,
     this.avatar,
+    this.status,
   });
 
   factory League.fromJson(Map<String, dynamic> json) {
@@ -44,6 +50,8 @@ class League {
       leagueType: json['league_type'] as String?,
       totalRosters: json['total_rosters'] as int?,
       scoringSettings: json['scoring_settings'] as Map<String, dynamic>?,
+      settings: json['settings'] as Map<String, dynamic>?,
+      metadata: json['metadata'] as Map<String, dynamic>?,
       rosterPositions: (json['roster_positions'] as List<dynamic>?)
           ?.map((e) => e as String)
           .toList(),
@@ -58,6 +66,7 @@ class League {
           : null,
       isActive: json['is_active'] as bool? ?? true,
       avatar: json['avatar'] as String?,
+      status: json['status'] as String?,
     );
   }
 
@@ -72,12 +81,15 @@ class League {
       'league_type': leagueType,
       'total_rosters': totalRosters,
       'scoring_settings': scoringSettings,
+      'settings': settings,
+      'metadata': metadata,
       'roster_positions': rosterPositions,
       'created_at': createdAt.toIso8601String(),
       'updated_at': updatedAt.toIso8601String(),
       'last_synced': lastSynced?.toIso8601String(),
       'is_active': isActive,
       'avatar': avatar,
+      'status': status,
     };
   }
 }
