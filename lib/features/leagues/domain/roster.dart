@@ -56,6 +56,25 @@ class Roster {
   /// Short team name (just the custom name or owner name)
   String get shortName => teamName ?? ownerDisplayName ?? 'Team $sleeperRosterId';
 
+  /// Season stats from settings
+  int get wins => settings?['wins'] as int? ?? 0;
+  int get losses => settings?['losses'] as int? ?? 0;
+  int get ties => settings?['ties'] as int? ?? 0;
+
+  double get pointsFor {
+    final fpts = settings?['fpts'] as int? ?? 0;
+    final decimal = settings?['fpts_decimal'] as int? ?? 0;
+    return fpts + (decimal / 100);
+  }
+
+  double get pointsAgainst {
+    final fpts = settings?['fpts_against'] as int? ?? 0;
+    final decimal = settings?['fpts_against_decimal'] as int? ?? 0;
+    return fpts + (decimal / 100);
+  }
+
+  String get record => '$wins-$losses${ties > 0 ? '-$ties' : ''}';
+
   factory Roster.fromJson(Map<String, dynamic> json, {String? currentUserSleeperID}) {
     final sleeperOwnerId = json['sleeper_owner_id'] as String;
     final isCurrentUser =

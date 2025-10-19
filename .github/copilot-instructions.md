@@ -141,6 +141,11 @@ Complete backend API with TypeScript/Deno functions:
 
 ## Dart Coding Guidelines
 - Try to use the latest version of stable dart and flutter.  Also - use the most current packages.
+- do not manually alter the database - use supabase migrations instead. save the .sql script in the migrations folder.  always use supabase edge functions for backend logic. when things need to be changed in the database - create a new migration file. reset the database and then run the scripts/complete_bootstrap.sh script to re-ingest all data.
+- Follow the official Dart style guide: https://dart.dev/guides/language/effective-dart/style-guide
+- Follow effective dart guidelines: https://dart.dev/guides/language/effective-dart
+- Use descriptive names for variables, functions, classes, and other identifiers.
+- Write clear and concise comments to explain complex logic or decisions.
 - Use null safety features extensively
 - Prefer immutable data structures where possible
 - Use async/await for all asynchronous operations   

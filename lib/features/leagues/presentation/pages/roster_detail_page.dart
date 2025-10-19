@@ -91,19 +91,67 @@ class RosterDetailPage extends ConsumerWidget {
                           ],
                         ),
                       ),
-                      // Stats
+                      // Stats - Season totals
                       Column(
                         crossAxisAlignment: CrossAxisAlignment.end,
                         children: [
+                          // Record
                           Text(
-                            '${roster.playerIds.length}',
-                            style: theme.textTheme.headlineMedium?.copyWith(
+                            roster.record,
+                            style: theme.textTheme.titleLarge?.copyWith(
                               color: theme.colorScheme.primary,
                               fontWeight: FontWeight.bold,
                             ),
                           ),
                           Text(
-                            'players',
+                            'record',
+                            style: theme.textTheme.bodySmall?.copyWith(
+                              color: theme.colorScheme.onSurfaceVariant,
+                            ),
+                          ),
+                          const SizedBox(height: 8),
+                          // Points For
+                          Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Text(
+                                'PF: ',
+                                style: theme.textTheme.bodySmall?.copyWith(
+                                  color: theme.colorScheme.onSurfaceVariant,
+                                ),
+                              ),
+                              Text(
+                                roster.pointsFor.toStringAsFixed(2),
+                                style: theme.textTheme.bodyMedium?.copyWith(
+                                  color: Colors.green,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                            ],
+                          ),
+                          // Points Against
+                          Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Text(
+                                'PA: ',
+                                style: theme.textTheme.bodySmall?.copyWith(
+                                  color: theme.colorScheme.onSurfaceVariant,
+                                ),
+                              ),
+                              Text(
+                                roster.pointsAgainst.toStringAsFixed(2),
+                                style: theme.textTheme.bodyMedium?.copyWith(
+                                  color: Colors.red.shade300,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 4),
+                          // Player count
+                          Text(
+                            '${roster.playerIds.length} players',
                             style: theme.textTheme.bodySmall?.copyWith(
                               color: theme.colorScheme.onSurfaceVariant,
                             ),
@@ -137,11 +185,11 @@ class RosterDetailPage extends ConsumerWidget {
                 ),
                 const SizedBox(height: 16),
 
-                // IR/Taxi
+                // IR
                 if (irPlayers.isNotEmpty)
                   _buildSection(
                     context,
-                    title: 'IR/taxi squad',
+                    title: 'IR',
                     icon: Icons.local_hospital,
                     iconColor: Colors.red,
                     players: irPlayers,
