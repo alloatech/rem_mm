@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:rem_mm/core/widgets/sleeper_avatar.dart';
 import 'package:rem_mm/features/auth/presentation/pages/sleeper_link_page.dart';
 import 'package:rem_mm/features/auth/presentation/providers/auth_providers.dart';
 import 'package:rem_mm/features/leagues/presentation/pages/league_detail_page.dart';
@@ -99,7 +100,12 @@ class HomeTab extends ConsumerWidget {
                                         ),
                                       );
                                     },
-                                    leading: const Icon(Icons.shield, size: 40),
+                                    leading: league.avatar != null
+                                        ? SleeperAvatar(
+                                            avatarId: league.avatar!,
+                                            radius: 20,
+                                          )
+                                        : const Icon(Icons.shield, size: 40),
                                     title: Text(
                                       league.leagueName,
                                       style: const TextStyle(fontWeight: FontWeight.bold),

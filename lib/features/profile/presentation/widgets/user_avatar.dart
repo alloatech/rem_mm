@@ -26,25 +26,33 @@ class UserAvatar extends ConsumerWidget {
         final profileAsync = ref.watch(currentUserProfileProvider(sleeperUserId));
 
         return profileAsync.when(
-          data: (profile) => GestureDetector(
-            onTap: () => _showProfileMenu(context, profile),
-            child: CircleAvatar(
-              radius: size / 2,
-              backgroundImage: profile?.avatarUrl != null
-                  ? NetworkImage(profile!.avatarUrl!)
-                  : null,
-              child: profile?.avatarUrl == null
-                  ? Text(
-                      profile?.sleeperUsername.substring(0, 1).toUpperCase() ?? 'U',
-                      style: TextStyle(
-                        fontSize: size * 0.4,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.white,
-                      ),
-                    )
-                  : null,
-            ),
-          ),
+          data: (profile) {
+            // Always use user's personal avatar, never team avatar
+            final userAvatarUrl = profile?.avatarId != null
+                ? 'https://sleepercdn.com/avatars/thumbs/${profile!.avatarId}'
+                : null;
+
+            return GestureDetector(
+              onTap: () => _showProfileMenu(context, profile),
+              child: CircleAvatar(
+                radius: size / 2,
+                backgroundColor: Colors.white, // Changed from orange to white
+                backgroundImage: userAvatarUrl != null
+                    ? NetworkImage(userAvatarUrl)
+                    : null,
+                child: userAvatarUrl == null
+                    ? Text(
+                        profile?.sleeperUsername.substring(0, 1).toUpperCase() ?? 'U',
+                        style: TextStyle(
+                          fontSize: size * 0.4,
+                          fontWeight: FontWeight.bold,
+                          color: Theme.of(context).colorScheme.primary,
+                        ),
+                      )
+                    : null,
+              ),
+            );
+          },
           loading: () => CircleAvatar(
             radius: size / 2,
             child: SizedBox(

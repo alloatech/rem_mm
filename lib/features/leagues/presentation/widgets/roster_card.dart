@@ -38,11 +38,26 @@ class RosterCard extends StatelessWidget {
                   ),
                 ),
                 const SizedBox(height: 4),
-                Text(
-                  roster.ownerDisplayName ?? 'Unknown Owner',
-                  style: theme.textTheme.bodySmall?.copyWith(
-                    color: theme.colorScheme.onSurfaceVariant,
-                  ),
+                // Owner name with small avatar
+                Row(
+                  children: [
+                    // Small user avatar (always uses user avatar, not team avatar)
+                    SleeperAvatar(
+                      avatarId: roster.avatarId,
+                      fallbackText: roster.ownerDisplayName ?? 'U',
+                      radius: 10,
+                    ),
+                    const SizedBox(width: 6),
+                    Expanded(
+                      child: Text(
+                        roster.ownerDisplayName ?? 'Unknown Owner',
+                        style: theme.textTheme.bodySmall?.copyWith(
+                          color: theme.colorScheme.onSurfaceVariant,
+                        ),
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                  ],
                 ),
               ],
             ),

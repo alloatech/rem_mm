@@ -13,6 +13,7 @@ class League {
   final DateTime updatedAt;
   final DateTime? lastSynced;
   final bool isActive;
+  final String? avatar; // League avatar ID from Sleeper
 
   const League({
     required this.id,
@@ -29,6 +30,7 @@ class League {
     required this.updatedAt,
     this.lastSynced,
     this.isActive = true,
+    this.avatar,
   });
 
   factory League.fromJson(Map<String, dynamic> json) {
@@ -55,6 +57,7 @@ class League {
           ? DateTime.parse(json['last_synced'] as String)
           : null,
       isActive: json['is_active'] as bool? ?? true,
+      avatar: json['avatar'] as String?,
     );
   }
 
@@ -74,6 +77,7 @@ class League {
       'updated_at': updatedAt.toIso8601String(),
       'last_synced': lastSynced?.toIso8601String(),
       'is_active': isActive,
+      'avatar': avatar,
     };
   }
 }

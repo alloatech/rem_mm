@@ -28,6 +28,7 @@ interface SleeperLeague {
   settings: any
   roster_positions: string[]
   total_rosters: number
+  avatar?: string  // League avatar ID from Sleeper
 }
 
 interface SleeperRoster {
@@ -322,6 +323,7 @@ async function syncUserLeagues(supabase: any, sleeper_user_id: string) {
     total_rosters: league.total_rosters,
     scoring_settings: league.settings || {},
     roster_positions: league.roster_positions || [],
+    avatar: league.avatar || null,  // League avatar from Sleeper API
     last_synced: new Date().toISOString()
   }))
 
@@ -420,14 +422,16 @@ async function syncUserRosters(supabase: any, sleeper_user_id: string) {
     const rosters: SleeperRoster[] = await rostersResponse.json()
     console.log(`📊 Found ${rosters.length} rosters in league ${league.sleeper_league_id}`)
 
-    // Fetch league users to get display names and team names
+    // Fetch league users to get display names, team names, and avatars
     const usersResponse = await fetch(`https://api.sleeper.app/v1/league/${league.sleeper_league_id}/users`)
     const users: any[] = usersResponse.ok ? await usersResponse.json() : []
     
-    // Create lookup maps for display names and team names
+    // Create lookup maps for display names, team names, and avatars
     const userDisplayNames = new Map(users.map(u => [u.user_id, u.display_name || u.username]))
     const userTeamNames = new Map(users.map(u => [u.user_id, u.metadata?.team_name || '']))
-    console.log(`👥 Fetched ${users.length} user display names and team names`)
+    const userAvatarIds = new Map(users.map(u => [u.user_id, u.avatar || null]))
+    const teamAvatarUrls = new Map(users.map(u => [u.user_id, u.metadata?.avatar || null]))
+    console.log(`👥 Fetched ${users.length} user profiles (display names, team names, avatars)`)
 
     // Store ALL rosters (multi-user strategy)
     for (const roster of rosters) {
@@ -446,6 +450,17 @@ async function syncUserRosters(supabase: any, sleeper_user_id: string) {
 
       // Get owner display name from users lookup
       const ownerDisplayName = userDisplayNames.get(roster.owner_id) || null
+      
+      // Get avatar information
+      const avatarId = userAvatarIds.get(roster.owner_id) || null
+      const teamAvatarUrl = teamAvatarUrls.get(roster.owner_id) || null
+      
+      if (avatarId) {
+        console.log(`🎨 User avatar ID for roster ${roster.roster_id}: ${avatarId}`)
+      }
+      if (teamAvatarUrl) {
+        console.log(`🖼️  Team avatar URL for roster ${roster.roster_id}: ${teamAvatarUrl}`)
+      }
 
       // Upsert roster data
       // If owner is registered: link immediately (app_user_id set)
@@ -459,6 +474,8 @@ async function syncUserRosters(supabase: any, sleeper_user_id: string) {
           sleeper_roster_id: roster.roster_id,
           team_name: teamName,  // Team name from user metadata
           owner_display_name: ownerDisplayName,  // Owner display name
+          avatar_id: avatarId,  // User avatar ID from Sleeper
+          team_avatar_url: teamAvatarUrl,  // Team-specific avatar URL from metadata
           player_ids: roster.players || [],
           starters: roster.starters || [],
           reserves: roster.reserve || [],
