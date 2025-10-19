@@ -104,6 +104,7 @@ class HomeTab extends ConsumerWidget {
                                         ? SleeperAvatar(
                                             avatarId: league.avatar!,
                                             radius: 20,
+                                            backgroundColor: Colors.white,
                                           )
                                         : const Icon(Icons.shield, size: 40),
                                     title: Text(

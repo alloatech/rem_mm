@@ -22,6 +22,7 @@ class RosterCard extends StatelessWidget {
             avatarUrl: roster.avatarUrl,
             fallbackText: roster.ownerDisplayName ?? roster.shortName,
             radius: 24,
+            backgroundColor: Colors.white,
           ),
           const SizedBox(width: 16),
 
@@ -46,6 +47,7 @@ class RosterCard extends StatelessWidget {
                       avatarId: roster.avatarId,
                       fallbackText: roster.ownerDisplayName ?? 'U',
                       radius: 10,
+                      backgroundColor: Colors.white,
                     ),
                     const SizedBox(width: 6),
                     Expanded(
