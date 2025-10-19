@@ -58,11 +58,13 @@ class AdminUser {
 
   factory AdminUser.fromJson(Map<String, dynamic> json) {
     return AdminUser(
-      sleeperUserId: json['sleeper_user_id'] as String,
-      sleeperUsername: json['sleeper_username'] as String,
+      sleeperUserId: json['sleeper_user_id'] as String? ?? '',
+      sleeperUsername: json['sleeper_username'] as String? ?? '',
       displayName: json['display_name'] as String?,
-      userRole: UserRoleExtension.fromJson(json['user_role'] as String),
-      createdAt: DateTime.parse(json['created_at'] as String),
+      userRole: UserRoleExtension.fromJson(json['user_role'] as String? ?? 'user'),
+      createdAt: DateTime.parse(
+        json['created_at'] as String? ?? DateTime.now().toIso8601String(),
+      ),
       lastLogin: json['last_login'] != null
           ? DateTime.parse(json['last_login'] as String)
           : null,
@@ -98,10 +100,10 @@ class AdminStatus {
 
   factory AdminStatus.fromJson(Map<String, dynamic> json) {
     return AdminStatus(
-      isAdmin: json['is_admin'] as bool,
-      isSuperAdmin: json['is_super_admin'] as bool,
-      userId: json['user_id'] as String,
-      userRole: UserRoleExtension.fromJson(json['user_role'] as String),
+      isAdmin: json['is_admin'] as bool? ?? false,
+      isSuperAdmin: json['is_super_admin'] as bool? ?? false,
+      userId: json['user_id'] as String? ?? '',
+      userRole: UserRoleExtension.fromJson(json['user_role'] as String? ?? 'user'),
     );
   }
 }

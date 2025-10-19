@@ -51,7 +51,12 @@ Deno.serve(async (req) => {
 
   // Main ingestion endpoint
   try {
-    const { limit = 25, test_mode = true, gemini_api_key } = await req.json().catch(() => ({}))
+    const { 
+      limit = 25, 
+      test_mode = true, 
+      gemini_api_key,
+      player_ids = null  // NEW: Accept specific player IDs for targeted embedding
+    } = await req.json().catch(() => ({}))
 
     updateStatus({
       phase: 'starting',
@@ -70,7 +75,7 @@ Deno.serve(async (req) => {
       supabase,
       'data_ingestion_start',
       'system',
-      { limit, test_mode, function: 'simple-ingestion' },
+      { limit, test_mode, targeted_players: !!player_ids, function: 'simple-ingestion' },
       req
     )
 
@@ -95,22 +100,34 @@ Deno.serve(async (req) => {
       message: '🔍 Filtering fantasy-relevant players...'
     })
 
-    const activePlayerIds = Object.keys(playersData).filter(id => {
-      const player = playersData[id]
-      return player.position && 
-             player.team &&  
-             ['QB', 'RB', 'WR', 'TE', 'K'].includes(player.position) && 
-             (player.status === 'Active' || !player.status)
-    })
+    let playerIdsToProcess: string[]
 
-    const playerIdsToProcess = test_mode 
-      ? activePlayerIds.slice(0, Math.min(limit, activePlayerIds.length))
-      : activePlayerIds
+    if (player_ids && Array.isArray(player_ids) && player_ids.length > 0) {
+      // 🎯 TARGETED MODE: Use specific player IDs (rostered players only)
+      playerIdsToProcess = player_ids.filter(id => playersData[id])
+      updateStatus({
+        message: `🎯 TARGETED MODE: ${playerIdsToProcess.length} specific players selected (rostered players)`,
+        total: playerIdsToProcess.length
+      })
+    } else {
+      // 🌐 BROAD MODE: Filter fantasy-relevant players
+      const activePlayerIds = Object.keys(playersData).filter(id => {
+        const player = playersData[id]
+        return player.position && 
+               player.team &&  
+               ['QB', 'RB', 'WR', 'TE', 'K'].includes(player.position) && 
+               (player.status === 'Active' || !player.status)
+      })
 
-    updateStatus({
-      message: `🎯 Selected ${playerIdsToProcess.length} players for processing`,
-      total: playerIdsToProcess.length
-    })
+      playerIdsToProcess = test_mode 
+        ? activePlayerIds.slice(0, Math.min(limit, activePlayerIds.length))
+        : activePlayerIds
+
+      updateStatus({
+        message: `🎯 Selected ${playerIdsToProcess.length} players for processing`,
+        total: playerIdsToProcess.length
+      })
+    }
 
     // Step 3: Sync players to database with progress updates
     updateStatus({
@@ -156,72 +173,150 @@ Deno.serve(async (req) => {
     if (gemini_api_key) {
       updateStatus({
         phase: 'embedding',
-        message: '🧠 Generating embeddings for key players...',
+        message: '🧠 Checking which players need embedding...',
         progress: 0,
         total: playerIdsToProcess.length
       })
 
+      // 💰 COST OPTIMIZATION: Fetch existing embeddings first
+      const { data: existingEmbeddings } = await supabase
+        .from('player_embeddings_selective')
+        .select('player_id, profile_hash')
+
+      const existingMap = new Map(
+        existingEmbeddings?.map((e: any) => [e.player_id, e.profile_hash]) || []
+      )
+
       let embeddedCount = 0
-      const embedBatchSize = 3
+      let skippedCount = 0
+      let failedCount = 0
+      const failedPlayers: string[] = []
+      const embedBatchSize = 10  // Increased from 3 - Gemini allows 60/min
 
       for (let i = 0; i < playerIdsToProcess.length; i += embedBatchSize) {
         const batch = playerIdsToProcess.slice(i, i + embedBatchSize)
         
-        for (const playerId of batch) {
-          try {
+        // Process batch concurrently using Promise.allSettled
+        const batchResults = await Promise.allSettled(
+          batch.map(async (playerId) => {
             const player = playersData[playerId]
             
             // Simple embedding logic for key players
-            if ((player as any).position && ['QB', 'RB', 'WR', 'TE'].includes((player as any).position) && (player as any).team) {
-              
-              updateStatus({
-                progress: embeddedCount,
-                message: `🧠 Embedding: ${(player as any).full_name} (${(player as any).position})`
-              })
-
-              const content = `Player: ${(player as any).full_name}, Position: ${(player as any).position}, Team: ${(player as any).team}`
-              
-              const embeddingResponse = await fetch(
-                `https://generativelanguage.googleapis.com/v1beta/models/text-embedding-004:embedContent?key=${gemini_api_key}`,
-                {
-                  method: 'POST',
-                  headers: { 'Content-Type': 'application/json' },
-                  body: JSON.stringify({
-                    model: "models/text-embedding-004",
-                    content: { parts: [{ text: content }] }
-                  })
-                }
-              )
-
-              if (embeddingResponse.ok) {
-                const embeddingData = await embeddingResponse.json()
-                const embedding = embeddingData.embedding.values
-
-                await supabase.from('player_embeddings_selective').upsert({
-                  player_id: playerId,
-                  content,
-                  embedding: `[${embedding.join(',')}]`,
-                  embed_reason: 'fantasy_relevant',
-                  embed_priority: 10
-                }, { onConflict: 'player_id' })
-
-                embeddedCount++
-              }
+            if (!(player as any).position || !['QB', 'RB', 'WR', 'TE'].includes((player as any).position) || !(player as any).team) {
+              return { status: 'irrelevant', playerId }
             }
-          } catch (error) {
-            console.error(`Error processing ${playerId}:`, error)
+            
+            // 🔑 Generate hash from stable fields only
+            const profileData = {
+              name: (player as any).full_name || '',
+              position: (player as any).position || '',
+              team: (player as any).team || '',
+              college: (player as any).college || '',
+              height: (player as any).height || '',
+              weight: (player as any).weight || '',
+              birth_date: (player as any).birth_date || ''
+            }
+            const profileHash = await crypto.subtle.digest(
+              'SHA-256',
+              new TextEncoder().encode(JSON.stringify(profileData))
+            )
+            const hashHex = Array.from(new Uint8Array(profileHash))
+              .map(b => b.toString(16).padStart(2, '0'))
+              .join('')
+
+            // 💰 Check if embedding exists with same profile
+            const existingHash = existingMap.get(playerId)
+            if (existingHash === hashHex) {
+              return { status: 'skipped', playerName: (player as any).full_name }
+            }
+
+            const content = `Player: ${(player as any).full_name}, Position: ${(player as any).position}, Team: ${(player as any).team}`
+            
+            const embeddingResponse = await fetch(
+              `https://generativelanguage.googleapis.com/v1beta/models/text-embedding-004:embedContent?key=${gemini_api_key}`,
+              {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                  model: "models/text-embedding-004",
+                  content: { parts: [{ text: content }] }
+                })
+              }
+            )
+
+            if (!embeddingResponse.ok) {
+              throw new Error(`Gemini API error: ${embeddingResponse.status}`)
+            }
+
+            const embeddingData = await embeddingResponse.json()
+            const embedding = embeddingData.embedding.values
+
+            const { error: insertError } = await supabase.from('player_embeddings_selective').upsert({
+              player_id: playerId,
+              content,
+              embedding: `[${embedding.join(',')}]`,
+              embed_reason: 'fantasy_relevant',
+              embed_priority: 10,
+              profile_hash: hashHex
+            }, { onConflict: 'player_id' })
+
+            if (insertError) {
+              throw new Error(`DB insert error: ${insertError.message}`)
+            }
+
+            return { status: 'success', playerName: (player as any).full_name, existingHash }
+          })
+        )
+
+        // Process results
+        for (let j = 0; j < batchResults.length; j++) {
+          const result = batchResults[j]
+          const playerId = batch[j]
+          const player = playersData[playerId]
+          const playerName = (player as any)?.full_name || playerId
+
+          if (result.status === 'fulfilled') {
+            const value = result.value as any
+            if (value.status === 'success') {
+              embeddedCount++
+              updateStatus({
+                progress: embeddedCount + skippedCount + failedCount,
+                message: `✅ ${value.playerName} (${value.existingHash ? 'updated' : 'new'})`
+              })
+            } else if (value.status === 'skipped') {
+              skippedCount++
+              updateStatus({
+                progress: embeddedCount + skippedCount + failedCount,
+                message: `⏭️  ${value.playerName} (unchanged)`
+              })
+            }
+          } else {
+            failedCount++
+            failedPlayers.push(`${playerName} (${playerId})`)
+            updateStatus({
+              progress: embeddedCount + skippedCount + failedCount,
+              message: `❌ ${playerName} - ${result.reason}`
+            })
           }
         }
 
-        // Rate limiting pause
-        await new Promise(resolve => setTimeout(resolve, 1500))
+        // Rate limiting: ~10 requests per batch, 60/min max = 6 batches/min = 10s between batches
+        // Use 10s pause to stay safely under limit
+        if (i + embedBatchSize < playerIdsToProcess.length) {
+          await new Promise(resolve => setTimeout(resolve, 10000))
+        }
       }
 
+      const totalProcessed = embeddedCount + skippedCount + failedCount
+      const hasFailures = failedCount > 0
+      
       updateStatus({
-        phase: 'complete',
-        message: `🎉 Complete! Synced ${syncedCount} players, embedded ${embeddedCount}`,
-        progress: embeddedCount,
-        total: embeddedCount
+        phase: hasFailures ? 'complete_with_errors' : 'complete',
+        message: hasFailures 
+          ? `⚠️  Complete with errors! Synced ${syncedCount}, embedded ${embeddedCount}, skipped ${skippedCount}, failed ${failedCount}`
+          : `🎉 Complete! Synced ${syncedCount}, embedded ${embeddedCount}, skipped ${skippedCount} unchanged`,
+        progress: totalProcessed,
+        total: totalProcessed
       })
 
       // 🔐 AUDIT: Data ingestion completed
@@ -232,20 +327,34 @@ Deno.serve(async (req) => {
         { 
           totalPlayers: syncedCount,
           embeddedPlayers: embeddedCount,
-          cost: (embeddedCount * 0.0001).toFixed(4),
+          skippedPlayers: skippedCount,
+          failedPlayers: failedCount,
+          savingsPercent: totalProcessed > 0 ? Math.round((skippedCount / totalProcessed) * 100) : 0,
+          actualCost: (embeddedCount * 0.0001).toFixed(4),
+          savedCost: (skippedCount * 0.0001).toFixed(4),
+          hasErrors: hasFailures,
           test_mode
         },
         req
       )
 
       return new Response(JSON.stringify({
-        success: true,
-        message: "Data ingestion completed with embeddings",
+        success: !hasFailures, // Only success if no failures
+        message: hasFailures 
+          ? `Data ingestion completed with ${failedCount} errors. Re-run to retry failed players.`
+          : "Data ingestion completed with embeddings",
         stats: {
           totalPlayers: syncedCount,
           embeddedPlayers: embeddedCount,
-          cost: (embeddedCount * 0.0001).toFixed(4)
-        }
+          skippedPlayers: skippedCount,
+          failedPlayers: failedCount,
+          cost: (embeddedCount * 0.0001).toFixed(4),
+          savedCost: (skippedCount * 0.0001).toFixed(4)
+        },
+        ...(failedCount > 0 && { 
+          failures: failedPlayers,
+          retryAdvice: "Re-run the script to automatically retry only the failed players."
+        })
       }), {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' }
       })

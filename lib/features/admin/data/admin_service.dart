@@ -15,6 +15,10 @@ class AdminService {
         body: {'action': 'check_admin_status', 'sleeper_user_id': sleeperUserId},
       );
 
+      if (response.data == null) {
+        throw Exception('No response data received');
+      }
+
       if (response.data['success'] != true) {
         throw Exception(response.data['error'] ?? 'Failed to check admin status');
       }
@@ -33,12 +37,20 @@ class AdminService {
         body: {'action': 'list_users', 'sleeper_user_id': sleeperUserId},
       );
 
+      if (response.data == null) {
+        throw Exception('No response data received');
+      }
+
       if (response.data['success'] != true) {
         throw Exception(response.data['error'] ?? 'Failed to get users');
       }
 
-      final users = response.data['users'] as List;
-      return users
+      final users = response.data['users'];
+      if (users == null) {
+        throw Exception('No users data in response');
+      }
+
+      return (users as List)
           .map((user) => AdminUser.fromJson(user as Map<String, dynamic>))
           .toList();
     } catch (e) {
@@ -58,6 +70,10 @@ class AdminService {
         },
       );
 
+      if (response.data == null) {
+        throw Exception('No response data received');
+      }
+
       if (response.data['success'] != true) {
         throw Exception(response.data['message'] ?? 'Failed to change role');
       }
@@ -76,11 +92,20 @@ class AdminService {
         body: {'action': 'get_role_audit', 'sleeper_user_id': sleeperUserId},
       );
 
+      if (response.data == null) {
+        throw Exception('No response data received');
+      }
+
       if (response.data['success'] != true) {
         throw Exception(response.data['error'] ?? 'Failed to get audit log');
       }
 
-      return List<Map<String, dynamic>>.from(response.data['audit_log'] as Iterable);
+      final auditLog = response.data['audit_log'];
+      if (auditLog == null) {
+        return [];
+      }
+
+      return List<Map<String, dynamic>>.from(auditLog as Iterable);
     } catch (e) {
       throw Exception('Failed to get audit log: $e');
     }

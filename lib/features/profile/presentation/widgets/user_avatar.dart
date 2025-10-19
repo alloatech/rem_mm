@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:rem_mm/features/auth/presentation/providers/auth_providers.dart';
 import 'package:rem_mm/features/profile/domain/user_profile.dart';
 import 'package:rem_mm/features/profile/presentation/pages/profile_page.dart';
 import 'package:rem_mm/features/profile/presentation/providers/profile_providers.dart';
@@ -14,63 +15,68 @@ class UserAvatar extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final sleeperUserId = ref.watch(currentSleeperUserIdProvider);
+    final sleeperUserIdAsync = ref.watch(currentSleeperUserIdProvider);
 
-    if (sleeperUserId == null) {
-      return CircleAvatar(radius: size / 2, child: const Icon(Icons.person));
-    }
+    return sleeperUserIdAsync.when(
+      data: (sleeperUserId) {
+        if (sleeperUserId == null) {
+          return CircleAvatar(radius: size / 2, child: const Icon(Icons.person));
+        }
 
-    final profileAsync = ref.watch(currentUserProfileProvider(sleeperUserId));
+        final profileAsync = ref.watch(currentUserProfileProvider(sleeperUserId));
 
-    return profileAsync.when(
-      data: (profile) => GestureDetector(
-        onTap: () => _showProfileMenu(context, profile),
-        child: Container(
-          decoration: BoxDecoration(
-            shape: BoxShape.circle,
-            border: Border.all(
-              color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.3),
-              width: 2,
+        return profileAsync.when(
+          data: (profile) => GestureDetector(
+            onTap: () => _showProfileMenu(context, profile),
+            child: CircleAvatar(
+              radius: size / 2,
+              backgroundImage: profile?.avatarUrl != null
+                  ? NetworkImage(profile!.avatarUrl!)
+                  : null,
+              child: profile?.avatarUrl == null
+                  ? Text(
+                      profile?.sleeperUsername.substring(0, 1).toUpperCase() ?? 'U',
+                      style: TextStyle(
+                        fontSize: size * 0.4,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.white,
+                      ),
+                    )
+                  : null,
             ),
           ),
-          child: CircleAvatar(
-            radius: size / 2 - 1,
-            backgroundImage: profile?.avatarUrl != null
-                ? NetworkImage(profile!.avatarUrl!)
-                : null,
-            child: profile?.avatarUrl == null
-                ? Text(
-                    profile?.sleeperUsername.substring(0, 1).toUpperCase() ?? 'T',
-                    style: TextStyle(fontSize: size * 0.4, fontWeight: FontWeight.bold),
-                  )
-                : null,
+          loading: () => CircleAvatar(
+            radius: size / 2,
+            child: SizedBox(
+              width: size * 0.6,
+              height: size * 0.6,
+              child: const CircularProgressIndicator(strokeWidth: 2),
+            ),
           ),
-        ),
-      ),
-      loading: () => GestureDetector(
-        onTap: () => _showProfileMenu(context, null),
-        child: CircleAvatar(
-          radius: size / 2,
-          child: SizedBox(
-            width: size * 0.6,
-            height: size * 0.6,
-            child: const CircularProgressIndicator(strokeWidth: 2),
+          error: (error, stack) => GestureDetector(
+            onTap: () => _showProfileMenu(context, null),
+            child: CircleAvatar(
+              radius: size / 2,
+              backgroundColor: Colors.grey.shade300,
+              child: Icon(Icons.error_outline, size: size * 0.5, color: Colors.red),
+            ),
           ),
+        );
+      },
+      loading: () => CircleAvatar(
+        radius: size / 2,
+        child: SizedBox(
+          width: size * 0.6,
+          height: size * 0.6,
+          child: const CircularProgressIndicator(strokeWidth: 2),
         ),
       ),
       error: (error, stack) => GestureDetector(
-        onTap: () => _showProfileMenu(context, _createFallbackProfile(sleeperUserId)),
+        onTap: () => _showProfileMenu(context, null),
         child: CircleAvatar(
           radius: size / 2,
-          backgroundColor: Theme.of(context).colorScheme.primary.withValues(alpha: 0.1),
-          child: Text(
-            'T',
-            style: TextStyle(
-              fontSize: size * 0.4,
-              fontWeight: FontWeight.bold,
-              color: Theme.of(context).colorScheme.primary,
-            ),
-          ),
+          backgroundColor: Colors.grey.shade300,
+          child: Icon(Icons.error_outline, size: size * 0.5, color: Colors.red),
         ),
       ),
     );
@@ -127,14 +133,5 @@ class UserAvatar extends ConsumerWidget {
     Navigator.of(
       context,
     ).push(MaterialPageRoute<void>(builder: (context) => const ProfilePage()));
-  }
-
-  UserProfile _createFallbackProfile(String sleeperUserId) {
-    return UserProfile(
-      sleeperUserId: sleeperUserId,
-      sleeperUsername: 'th0rjc', // Default for testing
-      displayName: 'Thor (Test User)',
-      createdAt: DateTime.now(),
-    );
   }
 }

@@ -14,11 +14,20 @@ class FantasyAdviceService {
         body: {'query': query, if (context != null) 'context': context},
       );
 
+      if (response.data == null) {
+        throw Exception('No response data received');
+      }
+
       if (response.data['success'] != true) {
         throw Exception(response.data['error'] ?? 'Failed to get fantasy advice');
       }
 
-      return response.data['advice'] as String;
+      final advice = response.data['advice'];
+      if (advice == null) {
+        throw Exception('No advice received in response');
+      }
+
+      return advice as String;
     } catch (e) {
       throw Exception('Failed to get fantasy advice: $e');
     }

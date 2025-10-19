@@ -39,13 +39,6 @@ final sleeperAvatarUrlProvider = Provider.family<String, String?>((ref, avatarId
   return profileService.getSleeperAvatarUrl(avatarId);
 });
 
-// Current user's sleeper ID provider (this should be connected to actual auth)
-final currentSleeperUserIdProvider = Provider<String?>((ref) {
-  // For testing purposes, default to th0rjc (super admin)
-  // In production, this would be derived from Supabase auth session
-  return '872612101674491904';
-});
-
 // Test user lookup provider for debugging
 final testUserLookupProvider = FutureProvider.family<Map<String, dynamic>, String>((
   ref,
@@ -61,6 +54,5 @@ final signOutProvider = FutureProvider<void>((ref) async {
   await profileService.signOut();
 
   // Clear all user-related providers
-  ref.invalidate(currentSleeperUserIdProvider);
   ref.invalidate(currentUserProfileProvider);
 });

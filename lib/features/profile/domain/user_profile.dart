@@ -43,6 +43,7 @@ class UserProfile {
   final String? displayName;
   final String? email;
   final String? avatarUrl;
+  final String? avatarId; // Sleeper avatar ID for CDN URLs
   final UserStatus status;
   final DateTime createdAt;
   final DateTime? lastLogin;
@@ -54,11 +55,16 @@ class UserProfile {
     this.displayName,
     this.email,
     this.avatarUrl,
+    this.avatarId,
     this.status = UserStatus.active,
     required this.createdAt,
     this.lastLogin,
     this.preferences,
   });
+
+  /// Get computed avatar URL from Sleeper CDN using avatar_id
+  String? get computedAvatarUrl =>
+      avatarId != null ? 'https://sleepercdn.com/avatars/thumbs/$avatarId' : null;
 
   factory UserProfile.fromJson(Map<String, dynamic> json) {
     return UserProfile(
@@ -67,6 +73,7 @@ class UserProfile {
       displayName: json['display_name'] as String?,
       email: json['email'] as String?,
       avatarUrl: json['avatar_url'] as String?,
+      avatarId: json['avatar_id'] as String?,
       status: UserStatusExtension.fromJson(json['status'] as String? ?? 'active'),
       createdAt: DateTime.parse(json['created_at'] as String),
       lastLogin: json['last_login'] != null
@@ -83,6 +90,7 @@ class UserProfile {
       'display_name': displayName,
       'email': email,
       'avatar_url': avatarUrl,
+      'avatar_id': avatarId,
       'status': status.jsonValue,
       'created_at': createdAt.toIso8601String(),
       'last_login': lastLogin?.toIso8601String(),
@@ -96,6 +104,7 @@ class UserProfile {
     String? displayName,
     String? email,
     String? avatarUrl,
+    String? avatarId,
     UserStatus? status,
     DateTime? createdAt,
     DateTime? lastLogin,
@@ -107,6 +116,7 @@ class UserProfile {
       displayName: displayName ?? this.displayName,
       email: email ?? this.email,
       avatarUrl: avatarUrl ?? this.avatarUrl,
+      avatarId: avatarId ?? this.avatarId,
       status: status ?? this.status,
       createdAt: createdAt ?? this.createdAt,
       lastLogin: lastLogin ?? this.lastLogin,

@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:rem_mm/core/config/env.dart';
 import 'package:rem_mm/core/theme/app_theme.dart';
-import 'package:rem_mm/features/navigation/main_navigation_page.dart';
+import 'package:rem_mm/features/auth/presentation/widgets/auth_wrapper.dart';
 import 'package:rem_mm/features/settings/presentation/providers/settings_providers.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
@@ -29,7 +29,7 @@ class RemMmApp extends ConsumerWidget {
       theme: appTheme.lightTheme,
       darkTheme: appTheme.darkTheme,
       themeMode: themeMode, // Defaults to dark mode
-      home: const MainNavigationPage(),
+      home: const AuthWrapper(),
     );
   }
 }

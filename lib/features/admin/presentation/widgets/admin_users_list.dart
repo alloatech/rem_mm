@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:rem_mm/features/admin/domain/admin_user.dart';
 import 'package:rem_mm/features/admin/presentation/providers/admin_providers.dart';
-import 'package:rem_mm/features/profile/presentation/providers/profile_providers.dart';
 
 class AdminUsersList extends ConsumerWidget {
   final String sleeperUserId;
@@ -43,6 +42,7 @@ class AdminUsersList extends ConsumerWidget {
                   return _UserCard(
                     user: user,
                     isSuperAdmin: isSuperAdmin,
+                    currentSleeperUserId: sleeperUserId,
                     onRoleChanged: () {
                       ref.invalidate(allUsersProvider(sleeperUserId));
                     },
@@ -73,18 +73,18 @@ class AdminUsersList extends ConsumerWidget {
 class _UserCard extends ConsumerWidget {
   final AdminUser user;
   final bool isSuperAdmin;
+  final String currentSleeperUserId;
   final VoidCallback onRoleChanged;
 
   const _UserCard({
     required this.user,
     required this.isSuperAdmin,
+    required this.currentSleeperUserId,
     required this.onRoleChanged,
   });
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final currentSleeperUserId = ref.watch(currentSleeperUserIdProvider);
-
     return Card(
       margin: const EdgeInsets.only(bottom: 12),
       child: ListTile(
@@ -208,9 +208,6 @@ class _UserCard extends ConsumerWidget {
 
     try {
       final adminService = ref.read(adminServiceProvider);
-      final currentSleeperUserId = ref.read(currentSleeperUserIdProvider);
-
-      if (currentSleeperUserId == null) return;
 
       await adminService.changeUserRole(
         currentSleeperUserId,

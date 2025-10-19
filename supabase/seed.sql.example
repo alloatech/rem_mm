@@ -1,0 +1,80 @@
+-- Example seed file for rem_mm
+-- Copy this to seed.sql and update with your credentials
+
+-- Create super admin user
+-- This uses the credentials from your .env file
+-- Make sure ADMIN_EMAIL and ADMIN_PASSWORD are set in .env
+
+DO $$
+DECLARE
+  admin_user_id UUID;
+  admin_auth_id UUID := '00000000-0000-0000-0000-000000000001';
+BEGIN
+  -- Clean up existing user if any
+  DELETE FROM auth.users WHERE email = 'YOUR_ADMIN_EMAIL_HERE';
+  DELETE FROM app_users WHERE sleeper_user_id = 'YOUR_SLEEPER_USER_ID_HERE';
+
+  -- Create auth user with secure password
+  -- IMPORTANT: Replace 'YOUR_PASSWORD_HASH_HERE' with actual bcrypt hash
+  -- Generate with: node -e "console.log(require('bcrypt').hashSync('your_password', 10))"
+  INSERT INTO auth.users (
+    id,
+    instance_id,
+    email,
+    encrypted_password,
+    email_confirmed_at,
+    created_at,
+    updated_at,
+    raw_app_meta_data,
+    raw_user_meta_data,
+    aud,
+    role
+  ) VALUES (
+    admin_auth_id,
+    '00000000-0000-0000-0000-000000000000',
+    'YOUR_ADMIN_EMAIL_HERE',
+    'YOUR_PASSWORD_HASH_HERE',
+    NOW(),
+    NOW(),
+    NOW(),
+    '{"provider":"email","providers":["email"]}'::jsonb,
+    '{"name":"Super Admin"}'::jsonb,
+    'authenticated',
+    'authenticated'
+  );
+
+  -- Insert identity record
+  INSERT INTO auth.identities (
+    provider_id,
+    user_id,
+    identity_data,
+    provider,
+    created_at,
+    updated_at
+  ) VALUES (
+    admin_auth_id::text,
+    admin_auth_id,
+    format('{"sub":"%s","email":"%s"}', admin_auth_id, 'YOUR_ADMIN_EMAIL_HERE')::jsonb,
+    'email',
+    NOW(),
+    NOW()
+  );
+
+  -- Create app_users record linked to Sleeper account
+  INSERT INTO app_users (
+    sleeper_user_id,
+    sleeper_username,
+    display_name,
+    supabase_user_id,
+    user_role
+  ) VALUES (
+    'YOUR_SLEEPER_USER_ID_HERE',
+    'YOUR_SLEEPER_USERNAME_HERE',
+    'Super Admin',
+    admin_auth_id,
+    'super_admin'
+  );
+
+  RAISE NOTICE '✅ Super admin user created: YOUR_ADMIN_EMAIL_HERE';
+  RAISE NOTICE '🔗 Linked to Sleeper account: YOUR_SLEEPER_USERNAME_HERE';
+END $$;

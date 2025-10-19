@@ -5,12 +5,56 @@
     "version": "0.2.0",
     "configurations": [
         {
+            "name": "rem_mm",
+            "request": "launch",
+            "type": "dart"
+        },
+        {
+            "name": "rem_mm (debug)",
+            "request": "launch",
+            "type": "dart",
+            "args": [
+                "--dart-define=DEBUG_MODE=true",
+                "--dart-define=LOG_LEVEL=debug"
+            ]
+        },
+        {
+            "name": "rem_mm (profile)",
+            "request": "launch",
+            "type": "dart",
+            "flutterMode": "profile"
+        },
+        {
+            "name": "rem_mm (release)",
+            "request": "launch",
+            "type": "dart",
+            "flutterMode": "release"
+        },
+        {
             "name": "rem_mm (web)",
+            "request": "launch",
+            "type": "dart",
+            "deviceId": "chrome"
+        },
+        {
+            "name": "rem_mm (web-debug)",
             "request": "launch",
             "type": "dart",
             "deviceId": "chrome",
             "args": [
-                "--wasm"
+                "--dart-define=DEBUG_MODE=true",
+                "--dart-define=LOG_LEVEL=debug"
+            ]
+        },
+        {
+            "name": "rem_mm (custom args)",
+            "request": "launch",
+            "type": "dart",
+            "args": [
+                // Add custom dart-define arguments here
+                // Example: "--dart-define=API_URL=http://localhost:54321",
+                // Example: "--dart-define=FEATURE_FLAG=enabled",
+                "--dart-define=DEBUG_MODE=true"
             ]
         }
     ]

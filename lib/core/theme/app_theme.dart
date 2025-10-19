@@ -23,16 +23,47 @@ class AppTheme {
     appBarTheme: _lightAppBarTheme,
   );
 
-  // Dark theme
+  // Dark theme with black background and your color palette
   ThemeData get darkTheme => ThemeData(
     useMaterial3: true,
     brightness: Brightness.dark,
-    colorScheme: ColorScheme.fromSeed(
-      seedColor: primaryOrange,
-      brightness: Brightness.dark,
-    ).copyWith(primary: primaryOrange, secondary: secondaryBlue, tertiary: tertiaryGreen),
+    colorScheme: ColorScheme.dark(
+      primary: primaryOrange, // #F58031 - main accent color
+      secondary: secondaryBlue, // #32ACE3 - secondary actions
+      tertiary: tertiaryGreen, // #59ba32 - success/positive states
+      surface: Colors.black, // True black background
+      background: Colors.black, // True black background
+      onSurface: Colors.white, // White text on black
+      onBackground: Colors.white, // White text on black
+      surfaceVariant: const Color(0xFF1A1A1A), // Slightly lighter for cards
+      onSurfaceVariant: const Color(0xFFE0E0E0), // Light gray for secondary text
+      outline: const Color(0xFF404040), // Dark gray for borders
+    ),
+    scaffoldBackgroundColor: Colors.black,
+    cardColor: const Color(0xFF1A1A1A),
     textTheme: _textTheme,
     appBarTheme: _darkAppBarTheme,
+    elevatedButtonTheme: ElevatedButtonThemeData(
+      style: ElevatedButton.styleFrom(
+        backgroundColor: primaryOrange,
+        foregroundColor: Colors.white,
+        elevation: 8,
+        shadowColor: primaryOrange.withOpacity(0.4),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      ),
+    ),
+    cardTheme: const CardThemeData(
+      color: Color(0xFF1A1A1A),
+      elevation: 8,
+      shadowColor: Colors.black87,
+      surfaceTintColor: Color(0xFF2A2A2A),
+      margin: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+    ),
+    // Enhanced container decorations for headers and panels
+    listTileTheme: ListTileThemeData(
+      tileColor: const Color(0xFF1A1A1A),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+    ),
   );
 
   // Shared text theme - bolder and smaller per user request
@@ -64,14 +95,16 @@ class AppTheme {
     ),
   );
 
-  // Dark app bar theme - smaller and bolder
+  // Dark app bar theme with gradient effect
   AppBarTheme get _darkAppBarTheme => AppBarTheme(
-    backgroundColor: primaryOrange,
-    foregroundColor: Colors.white,
+    backgroundColor: Colors.black,
+    foregroundColor: primaryOrange,
+    elevation: 0,
     titleTextStyle: GoogleFonts.raleway(
       fontSize: 18,
       fontWeight: FontWeight.w700,
-      color: Colors.white,
+      color: primaryOrange,
     ),
+    iconTheme: const IconThemeData(color: Color(0xFFF58031)),
   );
 }

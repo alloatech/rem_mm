@@ -3,7 +3,7 @@ import 'dart:async';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:rem_mm/features/admin/data/admin_service.dart';
 import 'package:rem_mm/features/admin/domain/admin_user.dart';
-import 'package:rem_mm/features/profile/presentation/providers/profile_providers.dart';
+import 'package:rem_mm/features/auth/presentation/providers/auth_providers.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 // Service provider
@@ -40,7 +40,7 @@ final roleAuditProvider = FutureProvider.family<List<Map<String, dynamic>>, Stri
 
 // Helper provider to check if current user is admin
 final isCurrentUserAdminProvider = FutureProvider<bool>((ref) async {
-  final sleeperUserId = ref.watch(currentSleeperUserIdProvider);
+  final sleeperUserId = await ref.watch(currentSleeperUserIdProvider.future);
   if (sleeperUserId == null) return false;
 
   try {
@@ -62,7 +62,7 @@ final isCurrentUserAdminProvider = FutureProvider<bool>((ref) async {
 
 // Helper provider to check if current user is super admin
 final isCurrentUserSuperAdminProvider = FutureProvider<bool>((ref) async {
-  final sleeperUserId = ref.watch(currentSleeperUserIdProvider);
+  final sleeperUserId = await ref.watch(currentSleeperUserIdProvider.future);
   if (sleeperUserId == null) return false;
 
   try {

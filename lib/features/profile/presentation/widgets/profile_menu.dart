@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:rem_mm/core/widgets/sleeper_avatar.dart';
+import 'package:rem_mm/features/auth/presentation/pages/sleeper_link_page.dart';
 import 'package:rem_mm/features/profile/domain/user_profile.dart';
 import 'package:rem_mm/features/profile/presentation/providers/profile_providers.dart';
 
@@ -25,20 +27,10 @@ class ProfileMenu extends ConsumerWidget {
             if (profile != null) ...[
               Row(
                 children: [
-                  CircleAvatar(
+                  SleeperAvatar(
+                    avatarId: profile!.avatarId,
+                    fallbackText: profile!.displayName ?? profile!.sleeperUsername,
                     radius: 24,
-                    backgroundImage: profile!.avatarUrl != null
-                        ? NetworkImage(profile!.avatarUrl!)
-                        : null,
-                    child: profile!.avatarUrl == null
-                        ? Text(
-                            profile!.sleeperUsername.substring(0, 1).toUpperCase(),
-                            style: const TextStyle(
-                              fontSize: 20,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          )
-                        : null,
                   ),
                   const SizedBox(width: 12),
                   Expanded(
@@ -100,6 +92,15 @@ class ProfileMenu extends ConsumerWidget {
               onTap: onProfileTap,
             ),
             _MenuTile(icon: Icons.settings, title: 'settings', onTap: onSettingsTap),
+            _MenuTile(
+              icon: Icons.link,
+              title: 're-link sleeper account',
+              onTap: () {
+                Navigator.of(
+                  context,
+                ).push(MaterialPageRoute<void>(builder: (_) => const SleeperLinkPage()));
+              },
+            ),
             _MenuTile(
               icon: Icons.help_outline,
               title: 'help & support',

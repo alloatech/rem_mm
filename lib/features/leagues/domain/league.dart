@@ -1,7 +1,7 @@
 class League {
   final String id;
   final String sleeperLeagueId;
-  final String appUserId;
+  final String? appUserId; // Made nullable since it's not always returned
   final String leagueName;
   final int season;
   final String sport;
@@ -17,7 +17,7 @@ class League {
   const League({
     required this.id,
     required this.sleeperLeagueId,
-    required this.appUserId,
+    this.appUserId, // Made optional
     required this.leagueName,
     required this.season,
     required this.sport,
@@ -33,20 +33,24 @@ class League {
 
   factory League.fromJson(Map<String, dynamic> json) {
     return League(
-      id: json['id'] as String,
-      sleeperLeagueId: json['sleeper_league_id'] as String,
-      appUserId: json['app_user_id'] as String,
-      leagueName: json['league_name'] as String,
-      season: json['season'] as int,
-      sport: json['sport'] as String,
+      id: json['id'] as String? ?? '',
+      sleeperLeagueId: json['sleeper_league_id'] as String? ?? '',
+      appUserId: json['app_user_id'] as String?, // Made nullable
+      leagueName: json['league_name'] as String? ?? 'Unknown League',
+      season: json['season'] as int? ?? DateTime.now().year,
+      sport: json['sport'] as String? ?? 'nfl',
       leagueType: json['league_type'] as String?,
       totalRosters: json['total_rosters'] as int?,
       scoringSettings: json['scoring_settings'] as Map<String, dynamic>?,
       rosterPositions: (json['roster_positions'] as List<dynamic>?)
           ?.map((e) => e as String)
           .toList(),
-      createdAt: DateTime.parse(json['created_at'] as String),
-      updatedAt: DateTime.parse(json['updated_at'] as String),
+      createdAt: DateTime.parse(
+        json['created_at'] as String? ?? DateTime.now().toIso8601String(),
+      ),
+      updatedAt: DateTime.parse(
+        json['updated_at'] as String? ?? DateTime.now().toIso8601String(),
+      ),
       lastSynced: json['last_synced'] != null
           ? DateTime.parse(json['last_synced'] as String)
           : null,
@@ -58,7 +62,7 @@ class League {
     return {
       'id': id,
       'sleeper_league_id': sleeperLeagueId,
-      'app_user_id': appUserId,
+      if (appUserId != null) 'app_user_id': appUserId,
       'league_name': leagueName,
       'season': season,
       'sport': sport,

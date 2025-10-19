@@ -233,3 +233,62 @@ export function createAuthenticatedClient(useServiceRole = false) {
   
   return { supabaseUrl, supabaseKey }
 }
+
+// Verify admin access (admin or super_admin role)
+export async function verifyAdminAccess(
+  supabaseClient: any,
+  supabase: any,
+  jwt: string
+): Promise<{
+  isAdmin: boolean
+  isSuperAdmin: boolean
+  sleeperUserId: string | null
+  error?: string
+}> {
+  try {
+    // Get user from JWT
+    const { data: { user }, error: authError } = await supabaseClient.auth.getUser(jwt)
+    
+    if (authError || !user) {
+      return {
+        isAdmin: false,
+        isSuperAdmin: false,
+        sleeperUserId: null,
+        error: 'Authentication failed'
+      }
+    }
+
+    // Get user role from app_users
+    const { data: appUser, error: dbError } = await supabase
+      .from('app_users')
+      .select('sleeper_user_id, user_role')
+      .eq('supabase_user_id', user.id)
+      .single()
+
+    if (dbError || !appUser) {
+      return {
+        isAdmin: false,
+        isSuperAdmin: false,
+        sleeperUserId: null,
+        error: 'User not found in app_users'
+      }
+    }
+
+    const isAdmin = appUser.user_role === 'admin' || appUser.user_role === 'super_admin'
+    const isSuperAdmin = appUser.user_role === 'super_admin'
+
+    return {
+      isAdmin,
+      isSuperAdmin,
+      sleeperUserId: appUser.sleeper_user_id,
+      error: isAdmin ? undefined : 'Admin access required'
+    }
+  } catch (error: any) {
+    return {
+      isAdmin: false,
+      isSuperAdmin: false,
+      sleeperUserId: null,
+      error: error.message || 'Verification failed'
+    }
+  }
+}

@@ -1,11 +1,18 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:rem_mm/features/leagues/data/leagues_service.dart';
+import 'package:rem_mm/features/leagues/data/rosters_service.dart';
 import 'package:rem_mm/features/leagues/domain/league.dart';
+import 'package:rem_mm/features/leagues/domain/roster.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 // Leagues service provider
 final leaguesServiceProvider = Provider<LeaguesService>((ref) {
   return LeaguesService(Supabase.instance.client);
+});
+
+// Rosters service provider
+final rostersServiceProvider = Provider<RostersService>((ref) {
+  return RostersService(Supabase.instance.client);
 });
 
 // User leagues provider
@@ -46,6 +53,45 @@ final refreshLeaguesProvider = FutureProvider<void>((ref) async {
   ref.invalidate(userLeaguesProvider);
   ref.invalidate(userLeaguesListProvider);
   ref.invalidate(hasLeaguesProvider);
+});
+
+// Roster providers
+
+// League rosters provider (all rosters in a league)
+final leagueRostersProvider = FutureProvider.family<List<Roster>, String>((
+  ref,
+  leagueId,
+) async {
+  final service = ref.read(rostersServiceProvider);
+  return service.getLeagueRosters(leagueId);
+});
+
+// User's rosters across all leagues
+final userRostersProvider = FutureProvider<List<Roster>>((ref) async {
+  final service = ref.read(rostersServiceProvider);
+  return service.getUserRosters();
+});
+
+// Current user's roster for a specific league
+final currentUserRosterProvider = FutureProvider.family<Roster?, String>((
+  ref,
+  leagueId,
+) async {
+  final service = ref.read(rostersServiceProvider);
+  return service.getCurrentUserRoster(leagueId);
+});
+
+// Roster sync provider
+final rosterSyncProvider = FutureProvider.family<void, String>((
+  ref,
+  sleeperUserId,
+) async {
+  final service = ref.read(rostersServiceProvider);
+  await service.syncUserRosters(sleeperUserId);
+  // Invalidate roster caches after sync
+  ref.invalidate(leagueRostersProvider);
+  ref.invalidate(userRostersProvider);
+  ref.invalidate(currentUserRosterProvider);
 });
 
 // Debug leagues provider

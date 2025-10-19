@@ -1,3 +1,6 @@
+import 'dart:convert';
+
+import 'package:http/http.dart' as http;
 import 'package:rem_mm/features/profile/domain/user_profile.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
@@ -50,6 +53,17 @@ class ProfileService {
 
       final userData = response.first as Map<String, dynamic>;
 
+      // Get avatar_id, fetch from Sleeper API if missing
+      String? avatarId = userData['avatar'] as String?;
+      if (avatarId == null || avatarId.isEmpty) {
+        print('🔍 ProfileService: No avatar ID found, fetching from Sleeper API...');
+        avatarId = await fetchSleeperAvatarId(sleeperUserId);
+        if (avatarId != null) {
+          print('✅ ProfileService: Fetched avatar ID: $avatarId, updating database...');
+          await updateProfileWithAvatarId(sleeperUserId, avatarId);
+        }
+      }
+
       // Transform database fields to match UserProfile expectations
       final transformedData = <String, dynamic>{
         'sleeper_user_id': userData['sleeper_user_id'],
@@ -59,6 +73,7 @@ class ProfileService {
         'avatar_url': userData['avatar'] != null
             ? getSleeperAvatarUrl(userData['avatar'] as String?)
             : null,
+        'avatar_id': avatarId, // Add the avatar_id field
         'status': userData['is_active'] == true ? 'active' : 'inactive',
         'created_at': userData['created_at'],
         'last_login': userData['last_login'],
@@ -119,6 +134,60 @@ class ProfileService {
       return 'https://sleepercdn.com/avatars/thumbs/default_avatar.png';
     }
     return 'https://sleepercdn.com/avatars/thumbs/$avatarId';
+  }
+
+  /// Fetch avatar ID from Sleeper API for a user
+  Future<String?> fetchSleeperAvatarId(String sleeperUserId) async {
+    try {
+      final response = await http.get(
+        Uri.parse('https://api.sleeper.app/v1/user/$sleeperUserId'),
+        headers: {'Content-Type': 'application/json'},
+      );
+
+      if (response.statusCode == 200) {
+        final userData = json.decode(response.body) as Map<String, dynamic>;
+        return userData['avatar'] as String?;
+      } else {
+        print('Failed to fetch user from Sleeper API: ${response.statusCode}');
+        return null;
+      }
+    } catch (e) {
+      print('Failed to fetch Sleeper avatar ID: $e');
+      return null;
+    }
+  }
+
+  /// Update user profile with avatar ID
+  Future<UserProfile?> updateProfileWithAvatarId(
+    String sleeperUserId,
+    String avatarId,
+  ) async {
+    try {
+      final response = await _supabase.rpc<List<dynamic>>(
+        'update_user_avatar_id',
+        params: {'p_sleeper_user_id': sleeperUserId, 'p_avatar_id': avatarId},
+      );
+
+      if (response.isNotEmpty) {
+        final userData = response.first as Map<String, dynamic>;
+        // Map the database columns to UserProfile format
+        final profileData = {
+          'sleeper_user_id': userData['sleeper_user_id'],
+          'sleeper_username': userData['sleeper_username'],
+          'display_name': userData['display_name'],
+          'email': userData['email'],
+          'avatar_id': userData['avatar'], // Map avatar column to avatar_id
+          'status': userData['is_active'] == true ? 'active' : 'inactive',
+          'created_at': userData['created_at'],
+          'last_login': userData['last_login'],
+        };
+        return UserProfile.fromJson(profileData);
+      }
+      return null;
+    } catch (e) {
+      print('Failed to update profile with avatar ID: $e');
+      return null;
+    }
   }
 
   /// Sign out current user
