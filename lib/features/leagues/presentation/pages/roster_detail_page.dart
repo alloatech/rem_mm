@@ -260,7 +260,28 @@ class RosterDetailPage extends ConsumerWidget {
                         ),
                       ),
                     ),
-                    const SizedBox(width: 8),
+                    const SizedBox(width: 6),
+                    // Team logo chip
+                    if (player.teamAbbr != null || player.team != null)
+                      Container(
+                        padding: const EdgeInsets.all(2),
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(4),
+                        ),
+                        child: ClipRRect(
+                          borderRadius: BorderRadius.circular(2),
+                          child: Image.network(
+                            'https://sleepercdn.com/images/team_logos/nfl/${(player.teamAbbr ?? player.team ?? '').toLowerCase()}.png',
+                            width: 20,
+                            height: 20,
+                            errorBuilder: (context, error, stackTrace) =>
+                                const SizedBox.shrink(),
+                          ),
+                        ),
+                      ),
+                    if (player.teamAbbr != null || player.team != null)
+                      const SizedBox(width: 4),
                     // Team
                     Text(
                       player.teamAbbr ?? player.team ?? 'FA',
