@@ -301,22 +301,78 @@ class RosterDetailPage extends ConsumerWidget {
             ),
           ),
 
-          // Player stats/info
+          // Player stats/info with badges
           Column(
             crossAxisAlignment: CrossAxisAlignment.end,
             children: [
-              if (player.yearsExp != null)
-                Text(
-                  'yr ${player.yearsExp}',
-                  style: theme.textTheme.bodySmall?.copyWith(
-                    color: theme.colorScheme.onSurfaceVariant,
+              // Rookie star badge or Experience badge
+              if (player.yearsExp != null) ...[
+                if (player.yearsExp == 0)
+                  // Rookie: Star shape with R layered on top
+                  SizedBox(
+                    width: 32,
+                    height: 32,
+                    child: Stack(
+                      alignment: Alignment.center,
+                      children: [
+                        // Layer 1: Yellow star icon as background
+                        Icon(Icons.star, size: 32, color: Colors.amber.shade400),
+                        // Layer 2: Dark "R" text on top
+                        Text(
+                          'R',
+                          style: TextStyle(
+                            fontSize: 13,
+                            fontWeight: FontWeight.bold,
+                            color: theme.brightness == Brightness.dark
+                                ? Colors.grey.shade900
+                                : Colors.grey.shade800,
+                            letterSpacing: 0.5,
+                          ),
+                        ),
+                      ],
+                    ),
+                  )
+                else
+                  // Experience badge - compact with "y" suffix
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 3),
+                    decoration: BoxDecoration(
+                      color: Colors.grey.shade800,
+                      borderRadius: BorderRadius.circular(10),
+                      border: Border.all(color: Colors.grey.shade600, width: 1),
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Text(
+                          '${player.yearsExp}',
+                          style: const TextStyle(
+                            fontSize: 11,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.white,
+                            height: 1.0,
+                          ),
+                        ),
+                        Text(
+                          'y',
+                          style: TextStyle(
+                            fontSize: 8,
+                            fontWeight: FontWeight.w500,
+                            color: Colors.grey.shade400,
+                            height: 1.0,
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
-                ),
+                const SizedBox(height: 4),
+              ],
               if (player.age != null)
                 Text(
                   'age ${player.age}',
                   style: theme.textTheme.bodySmall?.copyWith(
                     color: theme.colorScheme.onSurfaceVariant,
+                    fontSize: 10,
                   ),
                 ),
             ],
