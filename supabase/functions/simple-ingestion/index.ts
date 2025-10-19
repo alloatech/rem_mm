@@ -144,6 +144,8 @@ Deno.serve(async (req) => {
       const batchData = playerBatch.map(([playerId, player]) => ({
         player_id: playerId,
         full_name: (player as any).full_name,
+        first_name: (player as any).first_name,  // Important for DEF/ST (city name)
+        last_name: (player as any).last_name,    // Important for DEF/ST (mascot name)
         position: (player as any).position,
         team: (player as any).team,
         status: (player as any).status,

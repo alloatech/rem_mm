@@ -481,6 +481,21 @@ async function syncUserRosters(supabase: any, sleeper_user_id: string) {
       // Upsert roster data
       // If owner is registered: link immediately (app_user_id set)
       // If owner not registered: store with app_user_id=NULL (will link when they register)
+      
+      // Calculate bench players: all players NOT in starters and NOT in reserve (IR)
+      const allPlayers = roster.players || []
+      const starters = roster.starters || []
+      const reserve = roster.reserve || []  // IR players
+      const taxi = roster.taxi || []
+      
+      // Bench = all players - starters - reserve - taxi
+      const startersSet = new Set(starters)
+      const reserveSet = new Set(reserve)
+      const taxiSet = new Set(taxi)
+      const bench = allPlayers.filter(id => 
+        !startersSet.has(id) && !reserveSet.has(id) && !taxiSet.has(id)
+      )
+      
       const { error: rosterError } = await supabase
         .from('user_rosters')
         .upsert({
@@ -492,10 +507,10 @@ async function syncUserRosters(supabase: any, sleeper_user_id: string) {
           owner_display_name: ownerDisplayName,  // Owner display name
           avatar_id: avatarId,  // User avatar ID from Sleeper
           team_avatar_url: teamAvatarUrl,  // Team-specific avatar URL from metadata
-          player_ids: roster.players || [],
-          starters: roster.starters || [],
-          reserves: roster.reserve || [],
-          taxi: roster.taxi || [],
+          player_ids: allPlayers,
+          starters: starters,
+          reserves: bench,  // BENCH players (not starters, not IR, not taxi)
+          taxi: reserve,    // IR players go in taxi column (Sleeper's "reserve" = our IR)
           settings: roster.settings || {},
           last_synced: new Date().toISOString()
         }, {

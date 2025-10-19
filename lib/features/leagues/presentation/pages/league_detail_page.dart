@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:rem_mm/core/theme/elevated_containers.dart';
 import 'package:rem_mm/core/theme/gradient_background.dart';
 import 'package:rem_mm/features/leagues/domain/league.dart';
+import 'package:rem_mm/features/leagues/presentation/pages/roster_detail_page.dart';
 import 'package:rem_mm/features/leagues/presentation/providers/leagues_providers.dart';
 import 'package:rem_mm/features/leagues/presentation/widgets/roster_card.dart';
 
@@ -94,11 +95,9 @@ class LeagueDetailPage extends ConsumerWidget {
                       return RosterCard(
                         roster: roster,
                         onTap: () {
-                          // TODO: Navigate to roster detail page
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            SnackBar(
-                              content: Text('Viewing ${roster.shortName}'),
-                              duration: const Duration(seconds: 1),
+                          Navigator.of(context).push(
+                            MaterialPageRoute<void>(
+                              builder: (_) => RosterDetailPage(roster: roster),
                             ),
                           );
                         },
