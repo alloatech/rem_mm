@@ -261,20 +261,33 @@ class RosterDetailPage extends ConsumerWidget {
                       ),
                     ),
                     const SizedBox(width: 6),
-                    // Team logo chip
+                    // Team logo chip - helmet shape
                     if (player.teamAbbr != null || player.team != null)
                       Container(
+                        width: 24,
+                        height: 22,
                         padding: const EdgeInsets.all(2),
                         decoration: BoxDecoration(
-                          color: Colors.white,
-                          borderRadius: BorderRadius.circular(4),
+                          color: Colors.grey.shade300,
+                          borderRadius: const BorderRadius.only(
+                            topLeft: Radius.circular(12),
+                            topRight: Radius.circular(12),
+                            bottomLeft: Radius.circular(6),
+                            bottomRight: Radius.circular(6),
+                          ),
                         ),
                         child: ClipRRect(
-                          borderRadius: BorderRadius.circular(2),
+                          borderRadius: const BorderRadius.only(
+                            topLeft: Radius.circular(10),
+                            topRight: Radius.circular(10),
+                            bottomLeft: Radius.circular(4),
+                            bottomRight: Radius.circular(4),
+                          ),
                           child: Image.network(
                             'https://sleepercdn.com/images/team_logos/nfl/${(player.teamAbbr ?? player.team ?? '').toLowerCase()}.png',
                             width: 20,
-                            height: 20,
+                            height: 18,
+                            fit: BoxFit.contain,
                             errorBuilder: (context, error, stackTrace) =>
                                 const SizedBox.shrink(),
                           ),
@@ -354,36 +367,41 @@ class RosterDetailPage extends ConsumerWidget {
                     ),
                   )
                 else
-                  // Experience badge - compact with "y" suffix
+                  // Experience badge - matches rookie size
                   Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 3),
+                    width: 28,
+                    height: 28,
                     decoration: BoxDecoration(
                       color: Colors.grey.shade800,
-                      borderRadius: BorderRadius.circular(10),
+                      shape: BoxShape.circle,
                       border: Border.all(color: Colors.grey.shade600, width: 1),
                     ),
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Text(
-                          '${player.yearsExp}',
-                          style: const TextStyle(
-                            fontSize: 11,
-                            fontWeight: FontWeight.bold,
-                            color: Colors.white,
-                            height: 1.0,
+                    child: Center(
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        crossAxisAlignment: CrossAxisAlignment.baseline,
+                        textBaseline: TextBaseline.alphabetic,
+                        children: [
+                          Text(
+                            '${player.yearsExp}',
+                            style: const TextStyle(
+                              fontSize: 12,
+                              fontWeight: FontWeight.bold,
+                              color: Colors.white,
+                              height: 1.0,
+                            ),
                           ),
-                        ),
-                        Text(
-                          'y',
-                          style: TextStyle(
-                            fontSize: 8,
-                            fontWeight: FontWeight.w500,
-                            color: Colors.grey.shade400,
-                            height: 1.0,
+                          Text(
+                            'y',
+                            style: TextStyle(
+                              fontSize: 9,
+                              fontWeight: FontWeight.w600,
+                              color: Colors.grey.shade400,
+                              height: 1.0,
+                            ),
                           ),
-                        ),
-                      ],
+                        ],
+                      ),
                     ),
                   ),
                 const SizedBox(height: 4),
