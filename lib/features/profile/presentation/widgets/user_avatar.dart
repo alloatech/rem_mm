@@ -43,7 +43,7 @@ class UserAvatar extends ConsumerWidget {
                 child: userAvatarUrl == null
                     ? Text(
                         profile?.sleeperUsername.substring(0, 1).toUpperCase() ?? 'U',
-                        style: TextStyle(
+                        style: Theme.of(context).textTheme.titleMedium?.copyWith(
                           fontSize: size * 0.4,
                           fontWeight: FontWeight.bold,
                           color: Theme.of(context).colorScheme.primary,

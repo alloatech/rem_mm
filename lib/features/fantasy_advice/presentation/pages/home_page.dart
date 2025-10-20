@@ -103,12 +103,18 @@ class _HomePageState extends ConsumerState<HomePage> {
               controller: _queryController,
               decoration: InputDecoration(
                 hintText: 'e.g., "who are some good waiver wire QBs this week?"',
-                hintStyle: TextStyle(fontWeight: FontWeight.w500, fontSize: 12),
+                hintStyle: theme.textTheme.bodySmall?.copyWith(
+                  fontWeight: FontWeight.w500,
+                  fontSize: 12,
+                ),
                 border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
                 prefixIcon: const Icon(Icons.sports_football),
               ),
               maxLines: 3,
-              style: TextStyle(fontWeight: FontWeight.w500, fontSize: 14),
+              style: theme.textTheme.bodyLarge?.copyWith(
+                fontWeight: FontWeight.w500,
+                fontSize: 14,
+              ),
               onSubmitted: (_) => _getFantasyAdvice(),
             ),
             const SizedBox(height: 16),
@@ -131,9 +137,11 @@ class _HomePageState extends ConsumerState<HomePage> {
                         color: Colors.white,
                       ),
                     )
-                  : const Text(
+                  : Text(
                       'get fantasy advice',
-                      style: TextStyle(fontWeight: FontWeight.w600),
+                      style: theme.textTheme.labelLarge?.copyWith(
+                        fontWeight: FontWeight.w600,
+                      ),
                     ),
             ),
             const SizedBox(height: 24),

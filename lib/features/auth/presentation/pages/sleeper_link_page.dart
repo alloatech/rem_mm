@@ -75,8 +75,9 @@ class _SleeperLinkPageState extends ConsumerState<SleeperLinkPage> {
     return Scaffold(
       appBar: AppBar(
         title: const Text('link sleeper account'),
-        backgroundColor: Colors.transparent,
-        elevation: 0,
+        // Use themed app bar (dark gray + orange text) with elevation
+        backgroundColor: null,
+        elevation: null,
       ),
       body: SafeArea(
         child: Padding(
@@ -154,9 +155,11 @@ class _SleeperLinkPageState extends ConsumerState<SleeperLinkPage> {
                                   width: 20,
                                   child: CircularProgressIndicator(strokeWidth: 2),
                                 )
-                              : const Text(
+                              : Text(
                                   'link account',
-                                  style: TextStyle(fontSize: 16),
+                                  style: theme.textTheme.labelLarge?.copyWith(
+                                    fontSize: 16,
+                                  ),
                                 ),
                         ),
                       ],

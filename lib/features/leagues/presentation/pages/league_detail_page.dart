@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:rem_mm/core/theme/elevated_containers.dart';
 import 'package:rem_mm/core/theme/gradient_background.dart';
+import 'package:rem_mm/core/widgets/sleeper_avatar.dart';
 import 'package:rem_mm/features/leagues/domain/league.dart';
 import 'package:rem_mm/features/leagues/presentation/pages/roster_detail_page.dart';
 import 'package:rem_mm/features/leagues/presentation/providers/leagues_providers.dart';
@@ -19,7 +20,27 @@ class LeagueDetailPage extends ConsumerWidget {
 
     return Scaffold(
       appBar: AppBar(
-        title: Text(league.leagueName),
+        // Keep default leading (back arrow). Place logo + league name inside the title
+        title: Row(
+          children: [
+            if (league.avatar != null)
+              Padding(
+                padding: const EdgeInsets.only(right: 8.0),
+                child: SleeperAvatar(
+                  avatarId: league.avatar!,
+                  radius: 18,
+                  backgroundColor: Colors.white,
+                ),
+              ),
+            Expanded(
+              child: Text(
+                league.leagueName,
+                style: Theme.of(context).appBarTheme.titleTextStyle,
+                overflow: TextOverflow.ellipsis,
+              ),
+            ),
+          ],
+        ),
         actions: [
           IconButton(
             icon: const Icon(Icons.refresh),
@@ -34,18 +55,24 @@ class LeagueDetailPage extends ConsumerWidget {
           data: (rosters) {
             if (rosters.isEmpty) {
               return Center(
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    const Icon(Icons.groups_outlined, size: 64, color: Colors.grey),
-                    const SizedBox(height: 16),
-                    Text('no teams found', style: theme.textTheme.titleLarge),
-                    const SizedBox(height: 8),
-                    const Text(
-                      'sync your league to see teams',
-                      style: TextStyle(color: Colors.grey),
+                child: ElevatedCard(
+                  margin: const EdgeInsets.symmetric(horizontal: 24, vertical: 8),
+                  child: Padding(
+                    padding: const EdgeInsets.all(24.0),
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        const Icon(Icons.groups_outlined, size: 64, color: Colors.grey),
+                        const SizedBox(height: 16),
+                        Text('no teams found', style: theme.textTheme.titleLarge),
+                        const SizedBox(height: 8),
+                        Text(
+                          'sync your league to see teams',
+                          style: theme.textTheme.bodySmall?.copyWith(color: Colors.grey),
+                        ),
+                      ],
                     ),
-                  ],
+                  ),
                 ),
               );
             }
@@ -60,28 +87,41 @@ class LeagueDetailPage extends ConsumerWidget {
 
             return Column(
               children: [
-                // League info header with elevation and shadow
+                // Spacer between AppBar and main header
+                const SizedBox(height: 12),
+                // League info header with elevation and shadow (logo shown in app bar)
                 ElevatedHeader(
-                  child: Column(
+                  child: Row(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Row(
-                        children: [
-                          Expanded(
-                            child: Text(
+                      Expanded(
+                        child: Column(
+                          mainAxisSize: MainAxisSize.min,
+                          crossAxisAlignment: CrossAxisAlignment.center,
+                          children: [
+                            Text(
                               '${league.season} season • ${rosters.length} teams',
-                              style: theme.textTheme.titleMedium?.copyWith(
-                                color: theme.colorScheme.primary,
-                                fontWeight: FontWeight.bold,
-                              ),
+                              style:
+                                  (theme.textTheme.headlineSmall ??
+                                          theme.textTheme.titleLarge)
+                                      ?.copyWith(
+                                        color: theme.colorScheme.primary,
+                                        fontWeight: FontWeight.bold,
+                                        fontSize: 18,
+                                      ),
+                              textAlign: TextAlign.center,
                             ),
-                          ),
-                          // Status badge
-                          _buildStatusBadge(theme),
-                        ],
+                            const SizedBox(height: 8),
+                            _buildLeagueStats(theme),
+                          ],
+                        ),
                       ),
-                      const SizedBox(height: 8),
-                      _buildLeagueStats(theme),
+
+                      // Status badge to the right, aligned with top of the header content
+                      Padding(
+                        padding: const EdgeInsets.only(left: 8.0, right: 8.0, top: 2.0),
+                        child: _buildStatusBadge(theme),
+                      ),
                     ],
                   ),
                 ),
@@ -89,9 +129,13 @@ class LeagueDetailPage extends ConsumerWidget {
                 // Rosters list
                 Expanded(
                   child: ListView.builder(
+                    padding: const EdgeInsets.only(top: 24, bottom: 24),
                     itemCount: sortedRosters.length,
                     itemBuilder: (context, index) {
                       final roster = sortedRosters[index];
+
+                      // Use default per-card margins so inter-item spacing is unchanged.
+                      // Increase overall top/bottom padding of the list for extra breathing room.
                       return RosterCard(
                         roster: roster,
                         onTap: () {
@@ -110,24 +154,30 @@ class LeagueDetailPage extends ConsumerWidget {
           },
           loading: () => const Center(child: CircularProgressIndicator()),
           error: (error, stack) => Center(
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Icon(Icons.error_outline, size: 64, color: Colors.red.shade300),
-                const SizedBox(height: 16),
-                Text('error loading teams', style: theme.textTheme.titleLarge),
-                const SizedBox(height: 8),
-                Text(
-                  error.toString(),
-                  style: const TextStyle(color: Colors.grey),
-                  textAlign: TextAlign.center,
+            child: ElevatedCard(
+              margin: const EdgeInsets.symmetric(horizontal: 24, vertical: 8),
+              child: Padding(
+                padding: const EdgeInsets.all(24.0),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(Icons.error_outline, size: 64, color: Colors.red.shade300),
+                    const SizedBox(height: 16),
+                    Text('error loading teams', style: theme.textTheme.titleLarge),
+                    const SizedBox(height: 8),
+                    Text(
+                      error.toString(),
+                      style: theme.textTheme.bodySmall?.copyWith(color: Colors.grey),
+                      textAlign: TextAlign.center,
+                    ),
+                    const SizedBox(height: 16),
+                    ElevatedButton(
+                      onPressed: () => ref.invalidate(leagueRostersProvider(league.id)),
+                      child: const Text('retry'),
+                    ),
+                  ],
                 ),
-                const SizedBox(height: 16),
-                ElevatedButton(
-                  onPressed: () => ref.invalidate(leagueRostersProvider(league.id)),
-                  child: const Text('retry'),
-                ),
-              ],
+              ),
             ),
           ),
         ), // End of rostersAsync.when
@@ -162,6 +212,7 @@ class LeagueDetailPage extends ConsumerWidget {
     final stats = _extractLeagueStats();
 
     return Wrap(
+      alignment: WrapAlignment.center,
       spacing: 16,
       runSpacing: 8,
       children: stats.map((stat) {
@@ -174,7 +225,7 @@ class LeagueDetailPage extends ConsumerWidget {
               stat.label,
               style: theme.textTheme.bodySmall?.copyWith(
                 color: Colors.grey[300],
-                fontSize: 12,
+                fontSize: 11,
               ),
             ),
           ],

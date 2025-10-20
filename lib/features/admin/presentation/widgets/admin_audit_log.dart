@@ -83,14 +83,16 @@ class _AuditEntryCard extends StatelessWidget {
           targetUser != null
               ? '${targetUser['sleeper_username']} role changed'
               : 'Role change',
-          style: const TextStyle(fontWeight: FontWeight.w600),
+          style: Theme.of(
+            context,
+          ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w600),
         ),
         subtitle: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
               '${_formatRole(entry['old_role'] as String)} → ${_formatRole(entry['new_role'] as String)}',
-              style: TextStyle(
+              style: Theme.of(context).textTheme.bodySmall?.copyWith(
                 color: Theme.of(context).colorScheme.secondary,
                 fontWeight: FontWeight.w500,
               ),
@@ -98,13 +100,15 @@ class _AuditEntryCard extends StatelessWidget {
             const SizedBox(height: 4),
             Text(
               'Changed by: ${changedByUser != null ? changedByUser['sleeper_username'] : 'Unknown'}',
-              style: const TextStyle(fontSize: 12),
+              style: Theme.of(context).textTheme.bodySmall,
             ),
             if (entry['reason'] != null) ...[
               const SizedBox(height: 2),
               Text(
                 'Reason: ${entry['reason']}',
-                style: const TextStyle(fontSize: 12, fontStyle: FontStyle.italic),
+                style: Theme.of(
+                  context,
+                ).textTheme.bodySmall?.copyWith(fontStyle: FontStyle.italic),
               ),
             ],
           ],
@@ -115,11 +119,11 @@ class _AuditEntryCard extends StatelessWidget {
           children: [
             Text(
               _formatDate(createdAt),
-              style: const TextStyle(fontSize: 12, color: Colors.grey),
+              style: Theme.of(context).textTheme.bodySmall?.copyWith(color: Colors.grey),
             ),
             Text(
               _formatTime(createdAt),
-              style: const TextStyle(fontSize: 10, color: Colors.grey),
+              style: Theme.of(context).textTheme.labelSmall?.copyWith(color: Colors.grey),
             ),
           ],
         ),

@@ -23,14 +23,14 @@ class AuthWrapper extends ConsumerWidget {
             return const MainNavigationPage();
         }
       },
-      loading: () => const Scaffold(
+      loading: () => Scaffold(
         body: Center(
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              CircularProgressIndicator(),
-              SizedBox(height: 16),
-              Text('Loading...'),
+              const CircularProgressIndicator(),
+              const SizedBox(height: 16),
+              Text('Loading...', style: Theme.of(context).textTheme.bodyLarge),
             ],
           ),
         ),
@@ -42,12 +42,19 @@ class AuthWrapper extends ConsumerWidget {
             children: [
               const Icon(Icons.error_outline, size: 64, color: Colors.red),
               const SizedBox(height: 16),
-              const Text(
+              Text(
                 'Authentication Error',
-                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                  fontWeight: FontWeight.bold,
+                  fontSize: 18,
+                ),
               ),
               const SizedBox(height: 8),
-              Text(error.toString(), textAlign: TextAlign.center),
+              Text(
+                error.toString(),
+                textAlign: TextAlign.center,
+                style: Theme.of(context).textTheme.bodySmall,
+              ),
               const SizedBox(height: 16),
               ElevatedButton(
                 onPressed: () => ref.invalidate(authStatusProvider),

@@ -200,7 +200,9 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                                 )
                               : Text(
                                   _isSignUpMode ? 'create account' : 'sign in',
-                                  style: const TextStyle(fontSize: 16),
+                                  style: theme.textTheme.labelLarge?.copyWith(
+                                    fontSize: 16,
+                                  ),
                                 ),
                         ),
 

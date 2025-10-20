@@ -68,7 +68,7 @@ class ProfileMenu extends ConsumerWidget {
                             ),
                             child: Text(
                               profile!.status.displayName,
-                              style: TextStyle(
+                              style: Theme.of(context).textTheme.labelSmall?.copyWith(
                                 fontSize: 10,
                                 color: _getStatusColor(profile!.status),
                                 fontWeight: FontWeight.w600,
@@ -164,7 +164,11 @@ class _MenuTile extends StatelessWidget {
       leading: Icon(icon, color: textColor, size: 18),
       title: Text(
         title,
-        style: TextStyle(color: textColor, fontWeight: FontWeight.w600, fontSize: 12),
+        style: Theme.of(context).textTheme.labelSmall?.copyWith(
+          color: textColor,
+          fontWeight: FontWeight.w600,
+          fontSize: 12,
+        ),
       ),
       onTap: onTap,
       dense: true,

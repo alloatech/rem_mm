@@ -167,7 +167,7 @@ class RosterDetailPage extends ConsumerWidget {
                 _buildSection(
                   context,
                   title: 'starters',
-                  icon: Icons.star,
+                  icon: Icons.sports_football,
                   iconColor: Colors.amber,
                   players: starterPlayers,
                   emptyMessage: 'no starters set',
@@ -189,7 +189,7 @@ class RosterDetailPage extends ConsumerWidget {
                 if (irPlayers.isNotEmpty)
                   _buildSection(
                     context,
-                    title: 'IR',
+                    title: 'ir',
                     icon: Icons.local_hospital,
                     iconColor: Colors.red,
                     players: irPlayers,
@@ -232,11 +232,11 @@ class RosterDetailPage extends ConsumerWidget {
           padding: const EdgeInsets.only(left: 8, bottom: 8),
           child: Row(
             children: [
-              Icon(icon, color: iconColor, size: 20),
-              const SizedBox(width: 8),
+              Icon(icon, color: iconColor, size: 28),
+              const SizedBox(width: 10),
               Text(
                 title,
-                style: theme.textTheme.titleMedium?.copyWith(
+                style: theme.textTheme.titleLarge?.copyWith(
                   fontWeight: FontWeight.bold,
                   color: theme.colorScheme.primary,
                 ),
@@ -244,7 +244,7 @@ class RosterDetailPage extends ConsumerWidget {
               const SizedBox(width: 8),
               Text(
                 '(${players.length})',
-                style: theme.textTheme.titleMedium?.copyWith(
+                style: theme.textTheme.titleSmall?.copyWith(
                   color: theme.colorScheme.onSurfaceVariant,
                 ),
               ),
@@ -260,7 +260,9 @@ class RosterDetailPage extends ConsumerWidget {
                 padding: const EdgeInsets.all(16),
                 child: Text(
                   emptyMessage,
-                  style: TextStyle(color: theme.colorScheme.onSurfaceVariant),
+                  style: theme.textTheme.bodySmall?.copyWith(
+                    color: theme.colorScheme.onSurfaceVariant,
+                  ),
                 ),
               ),
             ),
@@ -273,11 +275,46 @@ class RosterDetailPage extends ConsumerWidget {
 
   Widget _buildPlayerCard(BuildContext context, Player player) {
     final theme = Theme.of(context);
+    final teamCode = (player.teamAbbr ?? player.team ?? '').toUpperCase();
+    final logoUrl =
+        'https://sleepercdn.com/images/team_logos/nfl/${(teamCode).toLowerCase()}.png';
 
     return ElevatedCard(
       margin: const EdgeInsets.only(bottom: 8),
       child: Row(
         children: [
+          // Team logo column - larger, circular, no white background
+          Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              SizedBox(
+                width: 48,
+                height: 48,
+                child: ClipOval(
+                  child: Image.network(
+                    logoUrl,
+                    width: 48,
+                    height: 48,
+                    fit: BoxFit.cover,
+                    errorBuilder: (context, error, stackTrace) => Container(
+                      color: Colors.transparent,
+                      child: Icon(Icons.shield, size: 28, color: Colors.grey.shade500),
+                    ),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 6),
+              Text(
+                teamCode.isNotEmpty ? teamCode : 'FA',
+                style: theme.textTheme.labelSmall?.copyWith(
+                  fontSize: 12,
+                  color: theme.colorScheme.onSurfaceVariant,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(width: 12),
+
           // Player info
           Expanded(
             child: Column(
@@ -301,49 +338,15 @@ class RosterDetailPage extends ConsumerWidget {
                       ),
                       child: Text(
                         player.position ?? 'N/A',
-                        style: const TextStyle(
+                        style: Theme.of(context).textTheme.labelSmall?.copyWith(
                           fontSize: 11,
                           fontWeight: FontWeight.bold,
                           color: Colors.white,
                         ),
                       ),
                     ),
-                    const SizedBox(width: 6),
-                    // Team logo chip - helmet shape
-                    if (player.teamAbbr != null || player.team != null)
-                      Container(
-                        width: 24,
-                        height: 22,
-                        padding: const EdgeInsets.all(2),
-                        decoration: BoxDecoration(
-                          color: Colors.grey.shade300,
-                          borderRadius: const BorderRadius.only(
-                            topLeft: Radius.circular(12),
-                            topRight: Radius.circular(12),
-                            bottomLeft: Radius.circular(6),
-                            bottomRight: Radius.circular(6),
-                          ),
-                        ),
-                        child: ClipRRect(
-                          borderRadius: const BorderRadius.only(
-                            topLeft: Radius.circular(10),
-                            topRight: Radius.circular(10),
-                            bottomLeft: Radius.circular(4),
-                            bottomRight: Radius.circular(4),
-                          ),
-                          child: Image.network(
-                            'https://sleepercdn.com/images/team_logos/nfl/${(player.teamAbbr ?? player.team ?? '').toLowerCase()}.png',
-                            width: 20,
-                            height: 18,
-                            fit: BoxFit.contain,
-                            errorBuilder: (context, error, stackTrace) =>
-                                const SizedBox.shrink(),
-                          ),
-                        ),
-                      ),
-                    if (player.teamAbbr != null || player.team != null)
-                      const SizedBox(width: 4),
-                    // Team
+                    const SizedBox(width: 8),
+                    // Team code + number inline (we moved logo to the left)
                     Text(
                       player.teamAbbr ?? player.team ?? 'FA',
                       style: theme.textTheme.bodySmall?.copyWith(
@@ -402,7 +405,7 @@ class RosterDetailPage extends ConsumerWidget {
                         // Layer 2: Dark "R" text on top
                         Text(
                           'R',
-                          style: TextStyle(
+                          style: theme.textTheme.titleSmall?.copyWith(
                             fontSize: 13,
                             fontWeight: FontWeight.bold,
                             color: theme.brightness == Brightness.dark
@@ -432,7 +435,7 @@ class RosterDetailPage extends ConsumerWidget {
                         children: [
                           Text(
                             '${player.yearsExp}',
-                            style: const TextStyle(
+                            style: theme.textTheme.labelSmall?.copyWith(
                               fontSize: 12,
                               fontWeight: FontWeight.bold,
                               color: Colors.white,
@@ -441,7 +444,7 @@ class RosterDetailPage extends ConsumerWidget {
                           ),
                           Text(
                             'y',
-                            style: TextStyle(
+                            style: theme.textTheme.labelSmall?.copyWith(
                               fontSize: 9,
                               fontWeight: FontWeight.w600,
                               color: Colors.grey.shade400,

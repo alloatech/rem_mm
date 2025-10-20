@@ -36,48 +36,74 @@ class SleeperAvatar extends StatelessWidget {
 
     // If no avatar URL available, show fallback immediately
     if (finalAvatarUrl == null) {
-      return CircleAvatar(
-        radius: radius,
-        backgroundColor: backgroundColor ?? theme.colorScheme.primary,
+      return Container(
+        width: radius * 2,
+        height: radius * 2,
+        decoration: BoxDecoration(
+          shape: BoxShape.circle,
+          color: backgroundColor ?? theme.colorScheme.primary,
+          border: Border.all(color: Colors.white.withOpacity(0.12), width: 1.5),
+        ),
         child: Center(child: _buildFallback(theme)),
       );
     }
 
-    return CircleAvatar(
-      radius: radius,
-      backgroundColor: backgroundColor ?? theme.colorScheme.surfaceVariant,
-      child: ClipOval(
-        child: Image.network(
-          finalAvatarUrl,
-          width: radius * 2,
-          height: radius * 2,
-          fit: BoxFit.cover,
-          errorBuilder: (context, error, stackTrace) {
-            // Show fallback when Sleeper avatar fails to load
-            return Container(
-              width: radius * 2,
-              height: radius * 2,
-              color: backgroundColor ?? theme.colorScheme.primary,
-              child: Center(child: _buildFallback(theme)),
-            );
-          },
-          loadingBuilder: (context, child, loadingProgress) {
-            if (loadingProgress == null) return child;
-            return SizedBox(
-              width: radius * 2,
-              height: radius * 2,
-              child: Center(
-                child: CircularProgressIndicator(
-                  strokeWidth: 2,
-                  color: theme.colorScheme.primary,
-                  value: loadingProgress.expectedTotalBytes != null
-                      ? loadingProgress.cumulativeBytesLoaded /
-                            loadingProgress.expectedTotalBytes!
-                      : null,
-                ),
-              ),
-            );
-          },
+    return Container(
+      width: radius * 2,
+      height: radius * 2,
+      decoration: BoxDecoration(
+        shape: BoxShape.circle,
+        border: Border.all(color: Colors.white.withOpacity(0.12), width: 1.5),
+      ),
+      child: CircleAvatar(
+        radius: radius,
+        backgroundColor: backgroundColor ?? theme.colorScheme.surfaceVariant,
+        child: ClipOval(
+          child: Image.network(
+            finalAvatarUrl,
+            width: radius * 2,
+            height: radius * 2,
+            fit: BoxFit.cover,
+            errorBuilder: (BuildContext context, Object error, StackTrace? stackTrace) {
+              // Show fallback when Sleeper avatar fails to load
+              return Container(
+                width: radius * 2,
+                height: radius * 2,
+                color: backgroundColor ?? theme.colorScheme.primary,
+                child: Center(child: _buildFallback(theme)),
+              );
+            },
+            loadingBuilder:
+                (BuildContext context, Widget child, ImageChunkEvent? loadingProgress) {
+                  if (loadingProgress == null) return child;
+                  if (loadingProgress.expectedTotalBytes != null) {
+                    final value =
+                        loadingProgress.cumulativeBytesLoaded /
+                        loadingProgress.expectedTotalBytes!;
+                    return SizedBox(
+                      width: radius * 2,
+                      height: radius * 2,
+                      child: Center(
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2,
+                          color: theme.colorScheme.primary,
+                          value: value.clamp(0.0, 1.0),
+                        ),
+                      ),
+                    );
+                  }
+                  return SizedBox(
+                    width: radius * 2,
+                    height: radius * 2,
+                    child: Center(
+                      child: CircularProgressIndicator(
+                        strokeWidth: 2,
+                        color: theme.colorScheme.primary,
+                      ),
+                    ),
+                  );
+                },
+          ),
         ),
       ),
     );
@@ -87,7 +113,7 @@ class SleeperAvatar extends StatelessWidget {
     if (fallbackText != null && fallbackText!.isNotEmpty) {
       return Text(
         fallbackText!.substring(0, 1).toUpperCase(),
-        style: TextStyle(
+        style: theme.textTheme.titleMedium?.copyWith(
           fontSize: radius * 0.8,
           fontWeight: FontWeight.bold,
           color: fallbackTextColor ?? Colors.white,

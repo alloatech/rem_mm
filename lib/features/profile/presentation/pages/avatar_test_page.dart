@@ -25,16 +25,21 @@ class AvatarTestPage extends ConsumerWidget {
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  const Text(
+                  Text(
                     'User Avatar Test',
-                    style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+                    style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                      fontWeight: FontWeight.bold,
+                      fontSize: 24,
+                    ),
                   ),
                   const SizedBox(height: 40),
 
                   // Different sizes
-                  const Text(
+                  Text(
                     'Different Sizes:',
-                    style: TextStyle(fontWeight: FontWeight.bold),
+                    style: Theme.of(
+                      context,
+                    ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
                   ),
                   const SizedBox(height: 16),
                   Row(
@@ -80,9 +85,11 @@ class AvatarTestPage extends ConsumerWidget {
                     ),
                     child: Column(
                       children: [
-                        const Text(
+                        Text(
                           'Current User Profile:',
-                          style: TextStyle(fontWeight: FontWeight.bold),
+                          style: Theme.of(
+                            context,
+                          ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
                         ),
                         const SizedBox(height: 16),
                         Consumer(

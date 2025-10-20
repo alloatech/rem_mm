@@ -24,20 +24,25 @@ class AdminTab extends ConsumerWidget {
         return adminStatusAsync.when(
           data: (AdminStatus adminStatus) {
             if (!adminStatus.isAdmin) {
-              return const Center(
+              return Center(
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    Icon(Icons.lock_outline, size: 64, color: Colors.grey),
-                    SizedBox(height: 16),
+                    const Icon(Icons.lock_outline, size: 64, color: Colors.grey),
+                    const SizedBox(height: 16),
                     Text(
                       'Admin Access Required',
-                      style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                      style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                        fontWeight: FontWeight.bold,
+                        fontSize: 18,
+                      ),
                     ),
-                    SizedBox(height: 8),
+                    const SizedBox(height: 8),
                     Text(
                       'You do not have admin privileges to view this page.',
-                      style: TextStyle(color: Colors.grey),
+                      style: Theme.of(
+                        context,
+                      ).textTheme.bodySmall?.copyWith(color: Colors.grey),
                       textAlign: TextAlign.center,
                     ),
                   ],
@@ -110,13 +115,16 @@ class AdminTab extends ConsumerWidget {
               ),
             );
           },
-          loading: () => const Center(
+          loading: () => Center(
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                CircularProgressIndicator(),
-                SizedBox(height: 16),
-                Text('Checking admin status...'),
+                const CircularProgressIndicator(),
+                const SizedBox(height: 16),
+                Text(
+                  'Checking admin status...',
+                  style: Theme.of(context).textTheme.bodyLarge,
+                ),
               ],
             ),
           ),
@@ -125,15 +133,19 @@ class AdminTab extends ConsumerWidget {
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 Icon(Icons.error_outline, size: 64, color: Colors.red.shade300),
-                const SizedBox(height: 16),
-                Text(
-                  'Error checking admin status',
-                  style: Theme.of(context).textTheme.titleLarge,
-                ),
                 const SizedBox(height: 8),
                 Text(
+                  'You do not have admin privileges to view this page.',
+                  style: Theme.of(
+                    context,
+                  ).textTheme.bodySmall?.copyWith(color: Colors.grey),
+                  textAlign: TextAlign.center,
+                ),
+                Text(
                   error.toString(),
-                  style: const TextStyle(color: Colors.grey),
+                  style: Theme.of(
+                    context,
+                  ).textTheme.bodySmall?.copyWith(color: Colors.grey),
                   textAlign: TextAlign.center,
                 ),
                 const SizedBox(height: 16),
@@ -169,7 +181,7 @@ class AdminTab extends ConsumerWidget {
             const SizedBox(height: 8),
             Text(
               error.toString(),
-              style: const TextStyle(color: Colors.grey),
+              style: Theme.of(context).textTheme.bodySmall?.copyWith(color: Colors.grey),
               textAlign: TextAlign.center,
             ),
             const SizedBox(height: 16),

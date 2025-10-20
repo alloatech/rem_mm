@@ -33,19 +33,23 @@ class _MainNavigationPageState extends ConsumerState<MainNavigationPage> {
       const AdminTab(), // Always include admin tab - it will handle access internally
     ];
 
+    final theme = Theme.of(context);
+
     return Scaffold(
+      backgroundColor: theme.scaffoldBackgroundColor,
       appBar: AppBar(
         title: Text(
           'Fantasy Football AI Assistant',
-          style: TextStyle(
-            color: Theme.of(context).colorScheme.onSurface,
+          style: theme.textTheme.titleMedium?.copyWith(
+            color: theme.appBarTheme.titleTextStyle?.color ?? theme.colorScheme.onSurface,
             fontWeight: FontWeight.bold,
             fontSize: 18,
           ),
         ),
         centerTitle: false,
-        backgroundColor: Colors.transparent,
-        elevation: 0,
+        // Use themed app bar background (avoid transparent which reveals dark system background)
+        backgroundColor: theme.appBarTheme.backgroundColor,
+        elevation: theme.appBarTheme.elevation ?? 4,
         actions: const [
           Padding(padding: EdgeInsets.only(right: 16.0), child: UserAvatar()),
         ],

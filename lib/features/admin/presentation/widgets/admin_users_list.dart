@@ -92,12 +92,17 @@ class _UserCard extends ConsumerWidget {
           backgroundColor: _getRoleColor(user.userRole),
           child: Text(
             user.sleeperUsername.substring(0, 1).toUpperCase(),
-            style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+            style: Theme.of(context).textTheme.titleMedium?.copyWith(
+              color: Colors.white,
+              fontWeight: FontWeight.bold,
+            ),
           ),
         ),
         title: Text(
           user.displayName ?? user.sleeperUsername,
-          style: const TextStyle(fontWeight: FontWeight.w600),
+          style: Theme.of(
+            context,
+          ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w600),
         ),
         subtitle: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -109,15 +114,20 @@ class _UserCard extends ConsumerWidget {
                 Chip(
                   label: Text(
                     user.userRole.displayName,
-                    style: const TextStyle(fontSize: 12),
+                    style: Theme.of(context).textTheme.labelSmall?.copyWith(fontSize: 12),
                   ),
                   backgroundColor: _getRoleColor(user.userRole).withValues(alpha: 0.1),
                   side: BorderSide(color: _getRoleColor(user.userRole)),
                 ),
                 if (!user.isActive) ...[
                   const SizedBox(width: 8),
-                  const Chip(
-                    label: Text('Inactive', style: TextStyle(fontSize: 12)),
+                  Chip(
+                    label: Text(
+                      'Inactive',
+                      style: Theme.of(
+                        context,
+                      ).textTheme.labelSmall?.copyWith(fontSize: 12),
+                    ),
                     backgroundColor: Colors.grey,
                   ),
                 ],

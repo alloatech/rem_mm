@@ -6,8 +6,9 @@ import 'package:rem_mm/features/leagues/domain/roster.dart';
 class RosterCard extends StatelessWidget {
   final Roster roster;
   final VoidCallback? onTap;
+  final EdgeInsetsGeometry? margin;
 
-  const RosterCard({super.key, required this.roster, this.onTap});
+  const RosterCard({super.key, required this.roster, this.onTap, this.margin});
 
   @override
   Widget build(BuildContext context) {
@@ -15,14 +16,21 @@ class RosterCard extends StatelessWidget {
 
     return ElevatedCard(
       onTap: onTap,
+      margin: margin,
       child: Row(
         children: [
-          // Avatar with consistent handling - prefer team avatar
-          SleeperAvatar(
-            avatarUrl: roster.avatarUrl,
-            fallbackText: roster.ownerDisplayName ?? roster.shortName,
-            radius: 24,
-            backgroundColor: Colors.white,
+          // Smaller helmet/team avatar (centered vertically)
+          Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              SleeperAvatar(
+                avatarUrl: roster.avatarUrl,
+                fallbackText: roster.ownerDisplayName ?? roster.shortName,
+                radius: 17,
+                // remove background so avatar image sits directly on gradient
+                backgroundColor: Colors.transparent,
+              ),
+            ],
           ),
           const SizedBox(width: 16),
 
@@ -91,9 +99,8 @@ class RosterCard extends StatelessWidget {
                   ),
                   child: Text(
                     'YOUR TEAM',
-                    style: TextStyle(
+                    style: theme.textTheme.labelSmall?.copyWith(
                       color: Colors.white,
-                      fontSize: 10,
                       fontWeight: FontWeight.bold,
                     ),
                   ),

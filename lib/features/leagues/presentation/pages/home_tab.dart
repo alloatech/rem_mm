@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:rem_mm/core/theme/elevated_containers.dart';
 import 'package:rem_mm/core/widgets/sleeper_avatar.dart';
 import 'package:rem_mm/features/auth/presentation/pages/sleeper_link_page.dart';
 import 'package:rem_mm/features/auth/presentation/providers/auth_providers.dart';
@@ -27,12 +28,7 @@ class HomeTab extends ConsumerWidget {
               return Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(
-                    'my leagues',
-                    style: theme.textTheme.headlineMedium?.copyWith(
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
+                  Text('my leagues', style: theme.textTheme.headlineMedium),
                   const SizedBox(height: 16),
 
                   // Leagues list
@@ -57,9 +53,11 @@ class HomeTab extends ConsumerWidget {
                                       style: theme.textTheme.titleLarge,
                                     ),
                                     const SizedBox(height: 8),
-                                    const Text(
+                                    Text(
                                       'link your sleeper account to see leagues',
-                                      style: TextStyle(color: Colors.grey),
+                                      style: theme.textTheme.bodySmall?.copyWith(
+                                        color: Colors.grey,
+                                      ),
                                       textAlign: TextAlign.center,
                                     ),
                                     const SizedBox(height: 24),
@@ -89,17 +87,20 @@ class HomeTab extends ConsumerWidget {
                               itemCount: leagues.length,
                               itemBuilder: (context, index) {
                                 final league = leagues[index];
-                                return Card(
+                                return ElevatedCard(
                                   margin: const EdgeInsets.only(bottom: 12),
+                                  borderWidth: 0.25,
+                                  onTap: () {
+                                    Navigator.of(context).push(
+                                      MaterialPageRoute<void>(
+                                        builder: (_) => LeagueDetailPage(league: league),
+                                      ),
+                                    );
+                                  },
                                   child: ListTile(
-                                    onTap: () {
-                                      Navigator.of(context).push(
-                                        MaterialPageRoute<void>(
-                                          builder: (_) =>
-                                              LeagueDetailPage(league: league),
-                                        ),
-                                      );
-                                    },
+                                    contentPadding: const EdgeInsets.symmetric(
+                                      horizontal: 8.0,
+                                    ),
                                     leading: league.avatar != null
                                         ? SleeperAvatar(
                                             avatarId: league.avatar!,
@@ -109,13 +110,15 @@ class HomeTab extends ConsumerWidget {
                                         : const Icon(Icons.shield, size: 40),
                                     title: Text(
                                       league.leagueName,
-                                      style: const TextStyle(fontWeight: FontWeight.bold),
+                                      style: theme.textTheme.titleMedium?.copyWith(
+                                        fontWeight: FontWeight.w700,
+                                      ),
                                     ),
                                     subtitle: Text(
                                       '${league.season} season • ${league.totalRosters ?? 0} teams',
-                                      style: TextStyle(
-                                        fontSize: 12,
+                                      style: theme.textTheme.bodySmall?.copyWith(
                                         color: Colors.grey[600],
+                                        fontSize: 12,
                                       ),
                                     ),
                                     trailing: const Icon(Icons.chevron_right),
@@ -142,7 +145,9 @@ class HomeTab extends ConsumerWidget {
                                 const SizedBox(height: 8),
                                 Text(
                                   error.toString(),
-                                  style: const TextStyle(color: Colors.grey),
+                                  style: theme.textTheme.bodySmall?.copyWith(
+                                    color: Colors.grey,
+                                  ),
                                   textAlign: TextAlign.center,
                                 ),
                                 const SizedBox(height: 16),
@@ -169,7 +174,7 @@ class HomeTab extends ConsumerWidget {
                   const SizedBox(height: 8),
                   Text(
                     error.toString(),
-                    style: const TextStyle(color: Colors.grey),
+                    style: theme.textTheme.bodySmall?.copyWith(color: Colors.grey),
                     textAlign: TextAlign.center,
                   ),
                   const SizedBox(height: 16),
