@@ -303,12 +303,14 @@ class RosterDetailPage extends ConsumerWidget {
                   ),
                 ),
               ),
-              const SizedBox(height: 6),
+              // Tighten vertical spacing between logo and team code
+              const SizedBox(height: 1),
               Text(
                 teamCode.isNotEmpty ? teamCode : 'FA',
                 style: theme.textTheme.labelSmall?.copyWith(
-                  fontSize: 12,
-                  color: theme.colorScheme.onSurfaceVariant,
+                  fontSize: 10,
+                  // more subdued grey so it's visible but not blaring
+                  color: theme.colorScheme.onSurface.withOpacity(0.56),
                 ),
               ),
             ],
@@ -346,22 +348,14 @@ class RosterDetailPage extends ConsumerWidget {
                       ),
                     ),
                     const SizedBox(width: 8),
-                    // Team code + number inline (we moved logo to the left)
-                    Text(
-                      player.teamAbbr ?? player.team ?? 'FA',
-                      style: theme.textTheme.bodySmall?.copyWith(
-                        color: theme.colorScheme.onSurfaceVariant,
-                        fontWeight: FontWeight.w500,
-                      ),
-                    ),
-                    if (player.number != null) ...[
+                    // player number only (team code shown next to logo on the left)
+                    if (player.number != null)
                       Text(
-                        ' • #${player.number}',
+                        '\u2022 #${player.number}',
                         style: theme.textTheme.bodySmall?.copyWith(
                           color: theme.colorScheme.onSurfaceVariant,
                         ),
                       ),
-                    ],
                   ],
                 ),
                 if (player.isInjured) ...[
@@ -393,7 +387,7 @@ class RosterDetailPage extends ConsumerWidget {
               // Rookie star badge or Experience badge
               if (player.yearsExp != null) ...[
                 if (player.yearsExp == 0)
-                  // Rookie: Star shape with R layered on top
+                  // Rookie: Star shape with R layered on top — bolder and nudged down
                   SizedBox(
                     width: 32,
                     height: 32,
@@ -402,26 +396,29 @@ class RosterDetailPage extends ConsumerWidget {
                       children: [
                         // Layer 1: Yellow star icon as background
                         Icon(Icons.star, size: 32, color: Colors.amber.shade400),
-                        // Layer 2: Dark "R" text on top
-                        Text(
-                          'R',
-                          style: theme.textTheme.titleSmall?.copyWith(
-                            fontSize: 13,
-                            fontWeight: FontWeight.bold,
-                            color: theme.brightness == Brightness.dark
-                                ? Colors.grey.shade900
-                                : Colors.grey.shade800,
-                            letterSpacing: 0.5,
+                        // Layer 2: Dark "R" text on top — nudge up slightly for better centering
+                        Transform.translate(
+                          offset: const Offset(0, -2),
+                          child: Text(
+                            'R',
+                            style: theme.textTheme.titleSmall?.copyWith(
+                              fontSize: 14,
+                              fontWeight: FontWeight.w800,
+                              color: theme.brightness == Brightness.dark
+                                  ? Colors.grey.shade900
+                                  : Colors.grey.shade800,
+                              letterSpacing: 0.5,
+                            ),
                           ),
                         ),
                       ],
                     ),
                   )
                 else
-                  // Experience badge - matches rookie size
+                  // Experience badge - slightly smaller backdrop and adjusted typography
                   Container(
-                    width: 28,
-                    height: 28,
+                    width: 24,
+                    height: 24,
                     decoration: BoxDecoration(
                       color: Colors.grey.shade800,
                       shape: BoxShape.circle,
@@ -445,7 +442,7 @@ class RosterDetailPage extends ConsumerWidget {
                           Text(
                             'y',
                             style: theme.textTheme.labelSmall?.copyWith(
-                              fontSize: 9,
+                              fontSize: 7,
                               fontWeight: FontWeight.w600,
                               color: Colors.grey.shade400,
                               height: 1.0,
