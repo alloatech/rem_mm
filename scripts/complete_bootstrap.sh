@@ -163,32 +163,161 @@ echo -e "${CYAN}   💡 TODO: Add explicit 'my team' selection UI (see docs/TODO
 ROSTERS_SYNCED=$(echo "$ROSTERS_RESPONSE" | jq -r '.rosters_synced // 0')
 echo -e "${GREEN}✅ Synced $ROSTERS_SYNCED roster(s) across all teams${NC}"
 
-# Step 5: Get rostered players
-echo -e "\n${GREEN}📊 Step 5/6: Identifying rostered players...${NC}"
-ROSTERED_RESPONSE=$(curl -s -X POST "$SUPABASE_URL/functions/v1/user-sync" \
-  -H "Authorization: Bearer $JWT_TOKEN" \
-  -H "Content-Type: application/json" \
-  -d "{\"action\":\"get_rostered_players\",\"sleeper_user_id\":\"$ADMIN_SLEEPER_ID\"}")
 
-PLAYER_COUNT=$(echo "$ROSTERED_RESPONSE" | jq -r '.player_count // 0')
-ROSTER_COUNT=$(echo "$ROSTERED_RESPONSE" | jq -r '.roster_count // 0')
-PLAYER_IDS=$(echo "$ROSTERED_RESPONSE" | jq -c '.player_ids')
+# Step 5: Load historical weekly roster player points
+# Get all league IDs
+LEAGUE_IDS=$(psql postgresql://postgres:postgres@127.0.0.1:54322/postgres -A -t -c "SELECT sleeper_league_id FROM leagues;" 2>/dev/null)
 
-# Calculate skill position players (QB/RB/WR/TE only)
-SKILL_PLAYER_COUNT=$(echo "scale=0; $PLAYER_COUNT - 26" | bc)  # Subtract ~12 DEF + ~14 K
+ERROR_COUNT=0
+ERROR_LOG="/tmp/bootstrap_errors.log"
+echo "" > "$ERROR_LOG"
+for LEAGUE_ID in $LEAGUE_IDS; do
+  echo -e "${CYAN}   Processing league: $LEAGUE_ID${NC}"
+  for WEEK in $(seq 1 18); do
+    MATCHUPS_JSON=$(curl -s "https://api.sleeper.app/v1/league/$LEAGUE_ID/matchups/$WEEK")
+    CURL_EXIT=$?
+    if [ $CURL_EXIT -ne 0 ] || [ -z "$MATCHUPS_JSON" ] || [ "$MATCHUPS_JSON" = "null" ]; then
+      echo -e "${RED}   Week $WEEK: Failed to fetch matchup data (curl exit $CURL_EXIT). Stopping.${NC}"
+      echo "LEAGUE $LEAGUE_ID WEEK $WEEK: curl error $CURL_EXIT" >> "$ERROR_LOG"
+      ERROR_COUNT=$((ERROR_COUNT+1))
+      break
+    fi
+    NONZERO=$(echo "$MATCHUPS_JSON" | jq '[.[].starters_points[]?] | map(select(. != 0)) | length')
+    JQ_EXIT=$?
+    if [ $JQ_EXIT -ne 0 ]; then
+      echo -e "${RED}   Week $WEEK: jq error parsing points.${NC}"
+      echo "LEAGUE $LEAGUE_ID WEEK $WEEK: jq error $JQ_EXIT" >> "$ERROR_LOG"
+      ERROR_COUNT=$((ERROR_COUNT+1))
+      break
+    fi
+    if [ "$NONZERO" -eq 0 ]; then
+      echo -e "${YELLOW}   Week $WEEK: All points zero, assuming future week. Stopping.${NC}"
+      break
+    fi
+    echo -e "${CYAN}   Week $WEEK: Loading points...${NC}"
+    MATCHUP_COUNT=$(echo "$MATCHUPS_JSON" | jq 'length')
+    echo -e "${CYAN}      Found $MATCHUP_COUNT matchups for week $WEEK${NC}"
+    echo "$MATCHUPS_JSON" | jq -c '.[]' | while read -r matchup; do
+      ROSTER_ID=$(echo "$matchup" | jq -r '.roster_id')
+      if [ -z "$ROSTER_ID" ]; then
+        echo -e "${RED}      Missing roster_id in matchup. Skipping.${NC}"
+        echo "LEAGUE $LEAGUE_ID WEEK $WEEK: missing roster_id" >> "$ERROR_LOG"
+        ERROR_COUNT=$((ERROR_COUNT+1))
+        continue
+      fi
+      echo -e "${CYAN}      Processing roster $ROSTER_ID${NC}"
+            # Convert starters and players to arrays (POSIX compatible)
+      STARTERS_ARR=()
+      if echo "$matchup" | jq -r '.starters[]?' > /tmp/starters.$$ 2>/dev/null; then
+        while IFS= read -r line; do
+          STARTERS_ARR+=("$line")
+        done < /tmp/starters.$$
+        rm /tmp/starters.$$
+        echo -e "${CYAN}      STARTERS_ARR has ${#STARTERS_ARR[@]} players${NC}"
+      else
+        echo -e "${RED}      Error parsing starters for roster $ROSTER_ID. Skipping.${NC}"
+        echo "LEAGUE $LEAGUE_ID WEEK $WEEK ROSTER $ROSTER_ID: starters jq error" >> "$ERROR_LOG"
+        ERROR_COUNT=$((ERROR_COUNT+1))
+        continue
+      fi
 
-echo -e "${GREEN}✅ Found $PLAYER_COUNT unique players across $ROSTER_COUNT rosters${NC}"
-echo -e "${CYAN}   • $SKILL_PLAYER_COUNT skill position players (QB/RB/WR/TE)${NC}"
-echo -e "${CYAN}   • ~26 DEF/K (no embeddings needed - direct stats lookup)${NC}"
+      # Convert reserve (injured reserve) to array
+      RESERVE_ARR=()
+      if echo "$matchup" | jq -r '.reserve[]?' > /tmp/reserve.$$ 2>/dev/null; then
+        while IFS= read -r line; do
+          RESERVE_ARR+=("$line")
+        done < /tmp/reserve.$$
+        rm /tmp/reserve.$$
+        echo -e "${CYAN}      RESERVE_ARR has ${#RESERVE_ARR[@]} players${NC}"
+      else
+        echo -e "${CYAN}      No injured reserve players found${NC}"
+      fi
 
-# Calculate cost based on skill players only
-EMBEDDING_COST=$(echo "scale=4; $SKILL_PLAYER_COUNT * 0.0001" | bc)
-COST_VS_ALL=$(echo "scale=4; 0.2964 - $EMBEDDING_COST" | bc)
-# Fix percentage calculation - bc needs proper scale handling
-SAVINGS_PERCENT=$(echo "scale=2; ($COST_VS_ALL * 100) / 0.2964" | bc | cut -d'.' -f1)
-echo -e "${BLUE}💰 Estimated embedding cost: \$${EMBEDDING_COST} (for ${SKILL_PLAYER_COUNT} players)${NC}"
-echo -e "${CYAN}   (vs \$0.2964 for all 2,964 players)${NC}"
-echo -e "${GREEN}   💸 Savings: \$${COST_VS_ALL} (~${SAVINGS_PERCENT}%)${NC}"
+      PLAYERS_ARR=()
+      if echo "$matchup" | jq -r '.players_points | keys[]' > /tmp/players.$$ 2>/dev/null; then
+        while IFS= read -r line; do
+          PLAYERS_ARR+=("$line")
+        done < /tmp/players.$$
+        rm /tmp/players.$$
+        echo -e "${CYAN}      PLAYERS_ARR has ${#PLAYERS_ARR[@]} players${NC}"
+      else
+        echo -e "${RED}      Error parsing players_points for roster $ROSTER_ID. Skipping.${NC}"
+        echo "LEAGUE $LEAGUE_ID WEEK $WEEK ROSTER $ROSTER_ID: players_points jq error" >> "$ERROR_LOG"
+        ERROR_COUNT=$((ERROR_COUNT+1))
+        continue
+      fi
+
+            # starters
+      for PLAYER_ID in "${STARTERS_ARR[@]}"; do
+        POINTS=$(echo "$matchup" | jq -r ".players_points[\"$PLAYER_ID\"] // 0")
+        PLAYER_NAME=$(psql -q postgresql://postgres:postgres@127.0.0.1:54322/postgres -t -c "SELECT COALESCE(full_name, '$PLAYER_ID') FROM players_raw WHERE player_id = '$PLAYER_ID' LIMIT 1;" 2>/dev/null)
+        echo -ne "\rProcessing Week $WEEK | Roster $ROSTER_ID | $PLAYER_NAME ($POINTS pts)"
+        PSQL_CMD="INSERT INTO live_roster_player_points (league_id, roster_id, week, player_id, points, section) VALUES ('$LEAGUE_ID', '$ROSTER_ID', '$WEEK', '$PLAYER_ID', '$POINTS', 'starters') ON CONFLICT (league_id, roster_id, week, player_id) DO UPDATE SET points = EXCLUDED.points, section = 'starters', last_updated = now();"
+        psql -q postgresql://postgres:postgres@127.0.0.1:54322/postgres -c "$PSQL_CMD"
+        PSQL_EXIT=$?
+        if [ -n "$PSQL_EXIT" ] && [ "$PSQL_EXIT" -ne 0 ]; then
+          echo -e "${RED}        Error inserting starter $PLAYER_ID for roster $ROSTER_ID week $WEEK${NC}"
+          echo "LEAGUE $LEAGUE_ID WEEK $WEEK ROSTER $ROSTER_ID PLAYER $PLAYER_ID: starter insert error $PSQL_EXIT" >> "$ERROR_LOG"
+          ERROR_COUNT=$((ERROR_COUNT+1))
+        fi
+      done
+
+      # injured reserve: players from reserve array (0 points)
+      for PLAYER_ID in "${RESERVE_ARR[@]}"; do
+        POINTS=0
+        PLAYER_NAME=$(psql -q postgresql://postgres:postgres@127.0.0.1:54322/postgres -t -c "SELECT COALESCE(full_name, '$PLAYER_ID') FROM players_raw WHERE player_id = '$PLAYER_ID' LIMIT 1;" 2>/dev/null)
+        echo -ne "\rProcessing Week $WEEK | Roster $ROSTER_ID | $PLAYER_NAME ($POINTS pts)"
+        PSQL_CMD="INSERT INTO live_roster_player_points (league_id, roster_id, week, player_id, points, section) VALUES ('$LEAGUE_ID', '$ROSTER_ID', '$WEEK', '$PLAYER_ID', '$POINTS', 'injured reserve') ON CONFLICT (league_id, roster_id, week, player_id) DO UPDATE SET points = EXCLUDED.points, section = 'injured reserve', last_updated = now();"
+        psql -q postgresql://postgres:postgres@127.0.0.1:54322/postgres -c "$PSQL_CMD"
+        PSQL_EXIT=$?
+        if [ -n "$PSQL_EXIT" ] && [ "$PSQL_EXIT" -ne 0 ]; then
+          echo -e "${RED}        Error inserting injured reserve $PLAYER_ID for roster $ROSTER_ID week $WEEK${NC}"
+          echo "LEAGUE $LEAGUE_ID WEEK $WEEK ROSTER $ROSTER_ID PLAYER $PLAYER_ID: injured reserve insert error $PSQL_EXIT" >> "$ERROR_LOG"
+          ERROR_COUNT=$((ERROR_COUNT+1))
+        fi
+      done
+
+      # bench: players minus starters minus injured reserve
+      for PLAYER_ID in "${PLAYERS_ARR[@]}"; do
+        IS_STARTER=false
+        for S_ID in "${STARTERS_ARR[@]}"; do
+          if [ "$PLAYER_ID" = "$S_ID" ]; then
+            IS_STARTER=true
+            break
+          fi
+        done
+        IS_RESERVE=false
+        for R_ID in "${RESERVE_ARR[@]}"; do
+          if [ "$PLAYER_ID" = "$R_ID" ]; then
+            IS_RESERVE=true
+            break
+          fi
+        done
+        if [ "$IS_STARTER" = false ] && [ "$IS_RESERVE" = false ]; then
+          POINTS=$(echo "$matchup" | jq -r ".players_points[\"$PLAYER_ID\"] // 0")
+          PLAYER_NAME=$(psql -q postgresql://postgres:postgres@127.0.0.1:54322/postgres -t -c "SELECT COALESCE(full_name, '$PLAYER_ID') FROM players_raw WHERE player_id = '$PLAYER_ID' LIMIT 1;" 2>/dev/null)
+          echo -ne "\rProcessing Week $WEEK | Roster $ROSTER_ID | $PLAYER_NAME ($POINTS pts)"
+          PSQL_CMD="INSERT INTO live_roster_player_points (league_id, roster_id, week, player_id, points, section) VALUES ('$LEAGUE_ID', '$ROSTER_ID', '$WEEK', '$PLAYER_ID', '$POINTS', 'bench') ON CONFLICT (league_id, roster_id, week, player_id) DO UPDATE SET points = EXCLUDED.points, section = 'bench', last_updated = now();"
+          psql -q postgresql://postgres:postgres@127.0.0.1:54322/postgres -c "$PSQL_CMD"
+          PSQL_EXIT=$?
+          if [ -n "$PSQL_EXIT" ] && [ "$PSQL_EXIT" -ne 0 ]; then
+            echo -e "${RED}        Error inserting bench $PLAYER_ID for roster $ROSTER_ID week $WEEK${NC}"
+            echo "LEAGUE $LEAGUE_ID WEEK $WEEK ROSTER $ROSTER_ID PLAYER $PLAYER_ID: bench insert error $PSQL_EXIT" >> "$ERROR_LOG"
+            ERROR_COUNT=$((ERROR_COUNT+1))
+          fi
+        fi
+      done
+      echo ""  # New line after roster processing
+    done
+    done
+  done
+if [ $ERROR_COUNT -gt 0 ]; then
+  echo -e "${RED}❌ $ERROR_COUNT errors occurred during roster player points loading. See $ERROR_LOG for details.${NC}"
+else
+  echo -e "${GREEN}✅ Roster player points loaded with no errors.${NC}"
+fi
+
+# Continue with embedding and summary steps
 
 # Step 6: Create embeddings (targeted)
 if [ -z "$GEMINI_API_KEY" ]; then

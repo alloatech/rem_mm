@@ -47,3 +47,5 @@ app.*.map.json
 # Environment and credentials (NEVER commit these)
 .env
 supabase/seed.sql
+
+phlux/
